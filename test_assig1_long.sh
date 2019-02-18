@@ -50,14 +50,16 @@ if {$force_conservative} {
 
 set timeout -1
 set testname [lindex $argv 0];
+set type [lindex $argv 1];
+set filename [lindex $argv 2];
 
 spawn /bin/sh
 expect "$ "
 send "make qemu-nox\r"
 sleep 1
 expect "$"
-send "$testname\r"
-sleep 1
+send "$testname $type $filename\r"
+sleep 10
 expect "$"
 send "\x01"; send "x"
 expect "QEMU: Terminated\r"

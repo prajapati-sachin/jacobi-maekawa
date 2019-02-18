@@ -4,5 +4,6 @@
 int main(void)
 {
 	toggle();
+	print_count();
     exit();
 }

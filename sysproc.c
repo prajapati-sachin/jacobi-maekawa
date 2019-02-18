@@ -105,10 +105,31 @@ int sys_ps(void){
 
 int sys_toggle(void){
   if(toggle==1){
+	//clear the syscall count array
+  	for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
     toggle=0;
   }
   else if(toggle==0){
+	//clear the syscall count array
+  	for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
+  	//switch the toggle
     toggle=1;
+  }
+  return 0;
+}
+
+//names of system call
+char* name_syscalls[] = {"sys_fork", "sys_exit", "sys_wait", "sys_pipe", "sys_read", 
+  "sys_kill", "sys_exec", "sys_fstat", "sys_chdir", "sys_dup", 
+  "sys_getpid", "sys_sbrk", "sys_sleep", "sys_uptime", "sys_open", 
+  "sys_write", "sys_mknod", "sys_unlink", "sys_link", "sys_mkdir", 
+  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count"} ;
+
+
+int sys_print_count(void){
+  //print the non-zero counts of system calls
+  for(int i=0;i< NELEM(syscall_count);i++){
+  	if(syscall_count[i]>0) cprintf("%s %d\n", name_syscalls[i], syscall_count[i]);
   }
   return 0;
 }

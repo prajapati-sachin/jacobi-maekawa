@@ -4,5 +4,6 @@
 int main(void)
 {
 	ps();
+	print_count();
     exit();
 }

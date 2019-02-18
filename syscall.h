@@ -23,4 +23,5 @@
 #define SYS_add  22
 #define SYS_ps  23
 #define SYS_toggle  24
+#define SYS_print_count  25
 

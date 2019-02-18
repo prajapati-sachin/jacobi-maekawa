@@ -174,12 +174,14 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_assig1_1\
-	_assig1_3\
-	_assig1_5\
 	_add\
 	_toggle\
 	_ps\
+	_assig1_1\
+	_assig1_2\
+	_assig1_3\
+	_assig1_4\
+	_assig1_5\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -248,7 +250,9 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 EXTRA=\
 	assig1_1.c\
+	assig1_2.c\
 	assig1_3.c\
+	assig1_4.c\
 	assig1_5.c\
 	add.c\
 	toggle.c\
