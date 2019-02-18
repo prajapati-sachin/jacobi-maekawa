@@ -23,8 +23,8 @@ sys_write 16
 sys_write 17
 sys_write 18
 sys_fork 1
-sys_exec 2
 sys_wait 1
+sys_exec 2
 sys_open 3
 sys_close 1
 sys_write 19
