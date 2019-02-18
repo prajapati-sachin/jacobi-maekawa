@@ -103,6 +103,10 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+extern int sys_add(void);
+extern int sys_ps(void);
+extern int sys_toggle(void);
+
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -126,7 +130,20 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
+[SYS_add]     sys_add,
+[SYS_ps]      sys_ps,
+[SYS_toggle]      sys_toggle,
+
 };
+
+static int syscall_count[24] = {0};
+int toggle=1;
+
+char* name_syscalls[] = {"sys_fork", "sys_exit", "sys_wait", "sys_pipe", "sys_read", 
+  "sys_kill", "sys_exec", "sys_fstat", "sys_chdir", "sys_dup", 
+  "sys_getpid", "sys_sbrk", "sys_sleep", "sys_uptime", "sys_open", 
+  "sys_write", "sys_mknod", "sys_unlink", "sys_link", "sys_mkdir", 
+  "sys_close", "sys_add", "sys_ps", "sys_toggle"} ;
 
 void
 syscall(void)
@@ -136,6 +153,10 @@ syscall(void)
 
   num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+    syscall_count[num-1]++;
+    if(toggle==1){
+      cprintf("%s %d\n", name_syscalls[num-1], syscall_count[num-1]);
+    }
     curproc->tf->eax = syscalls[num]();
   } else {
     cprintf("%d %s: unknown sys call %d\n",

@@ -532,3 +532,28 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+void ps(void){
+   static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
+  // int i;
+  struct proc *p;
+  // char *state;
+  // uint pc[10];
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->state == UNUSED)
+      continue;
+    if(p->state >= 0 && p->state < NELEM(states) && states[p->state]){
+	    cprintf("pid:%d name:%s\n", p->pid, p->name);
+      // state = states[p->state];
+    }
+    
+  } 
+}

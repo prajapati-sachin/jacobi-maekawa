@@ -12,6 +12,7 @@ struct cpu {
 
 extern struct cpu cpus[NCPU];
 extern int ncpu;
+extern int toggle;
 
 //PAGEBREAK: 17
 // Saved registers for kernel context switches.
@@ -50,6 +51,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 };
+
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

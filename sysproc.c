@@ -7,6 +7,8 @@
 #include "mmu.h"
 #include "proc.h"
 
+// extern int toggle;
+
 int
 sys_fork(void)
 {
@@ -88,4 +90,25 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+int sys_add(int a, int b){
+	argint(0, &a);
+	argint(1, &b);
+	return a+b;
+}
+
+int sys_ps(void){
+  ps();
+  return 0;
+}
+
+int sys_toggle(void){
+  if(toggle==1){
+    toggle=0;
+  }
+  else if(toggle==0){
+    toggle=1;
+  }
+  return 0;
 }
