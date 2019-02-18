@@ -33,4 +33,6 @@ SYSCALL(add)
 SYSCALL(ps)
 SYSCALL(toggle)
 SYSCALL(print_count)
+SYSCALL(send)
+SYSCALL(recv)
 

@@ -7,6 +7,7 @@
 #include "mmu.h"
 #include "proc.h"
 
+
 // extern int toggle;
 
 int
@@ -123,8 +124,7 @@ char* name_syscalls[] = {"sys_fork", "sys_exit", "sys_wait", "sys_pipe", "sys_re
   "sys_kill", "sys_exec", "sys_fstat", "sys_chdir", "sys_dup", 
   "sys_getpid", "sys_sbrk", "sys_sleep", "sys_uptime", "sys_open", 
   "sys_write", "sys_mknod", "sys_unlink", "sys_link", "sys_mkdir", 
-  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count"} ;
-
+  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count", "sys_send", "sys_recv"} ;
 
 int sys_print_count(void){
   //print the non-zero counts of system calls
@@ -132,4 +132,40 @@ int sys_print_count(void){
   	if(syscall_count[i]>0) cprintf("%s %d\n", name_syscalls[i], syscall_count[i]);
   }
   return 0;
+}
+
+int free_msg_buffer = 0;
+struct message_uni msg_buffer[10];
+
+int sys_send(int sender_pid, int rec_pid, void *msg){
+	argint(0, &sender_pid);
+	argint(1, &rec_pid);
+	char* msg_char = (char *)msg;
+  argptr(2, &msg_char, 8);
+	char* mess;
+	uint addmsg = (uint) msg_char;
+  fetchstr(addmsg, &mess);
+
+	//Message Buffer is full
+	if(free_msg_buffer>=10) return -1;
+
+	msg_buffer[free_msg_buffer].sender_id = sender_pid;
+	msg_buffer[free_msg_buffer].recv_id = rec_pid;
+	strncpy(msg_buffer[free_msg_buffer].message, mess, 8);
+	// cprintf("Sent string: %s", mess);
+  free_msg_buffer++;
+	return 0;
+}
+
+int sys_recv(void *msg){
+  char* msg_char = (char *)msg;
+  argptr(0, &msg_char, 8);
+  int recevier = myproc()->pid;
+	for(int i=0;i<free_msg_buffer;i++){
+    if(msg_buffer[i].recv_id==recevier){
+      // cprintf("Recevied string: %s\n", msg_buffer[i].message);
+    	strncpy(msg_char, msg_buffer[i].message, 8);
+		}
+	}
+	return 0;
 }

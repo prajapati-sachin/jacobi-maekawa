@@ -190,5 +190,18 @@ void            clearpteu(pde_t *pgdir, char *uva);
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
 
-int toggle;
-int syscall_count[25];
+//for toggle and print_count
+extern int toggle;
+extern int syscall_count[27];
+
+//for unicast
+extern int free_msg_buffer;
+
+struct message_uni{
+	int sender_id;
+	int recv_id;
+	char message[8];
+};
+
+extern struct message_uni msg_buffer[10];
+

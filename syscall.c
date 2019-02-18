@@ -107,6 +107,8 @@ extern int sys_add(void);
 extern int sys_ps(void);
 extern int sys_toggle(void);
 extern int sys_print_count(void);
+extern int sys_send(void);
+extern int sys_recv(void);
 
 
 static int (*syscalls[])(void) = {
@@ -135,10 +137,12 @@ static int (*syscalls[])(void) = {
 [SYS_ps]      sys_ps,
 [SYS_toggle]      sys_toggle,
 [SYS_print_count]      sys_print_count,
+[SYS_send]      sys_send,
+[SYS_recv]      sys_recv,
 
 };
 
-int syscall_count[25] = {0};
+int syscall_count[27] = {0};
 int toggle=0;
 
 
