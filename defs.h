@@ -121,6 +121,8 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 void			ps(void);
+void			send_mess(int sender_pid, int rec_pid, char* mess);
+void			recv_mess(int rec_pid, char* mess);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -195,13 +197,22 @@ extern int toggle;
 extern int syscall_count[27];
 
 //for unicast
-extern int free_msg_buffer;
+// extern int free_msg_buffer;
 
-struct message_uni{
-	int sender_id;
-	int recv_id;
-	char message[8];
-};
 
-extern struct message_uni msg_buffer[10];
+#define NULL 0
+
+// struct message_node{
+// 	message_node* next;
+// 	int sender_id;
+// 	char message[8];
+// };
+
+// struct receiver_q{
+// 	message_node* head;
+// 	message_node* last;
+// 	int channel;
+// };
+
+// extern struct receiver_q msg_queue[64];
 
