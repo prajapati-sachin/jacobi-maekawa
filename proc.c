@@ -604,7 +604,7 @@ void send_mess(int sender_pid, int rec_pid, char* mess){
     ((p->recv_queue).sender_id)[(p->recv_queue).tail] = sender_pid; 
     (p->recv_queue).tail = ((p->recv_queue).tail+1)%NUM_MSG;
     // cprintf("New tail: %d\n", (p->recv_queue)->tail);
-    chanchan = p->chan;
+    chanchan = p;
     // wakeup(p->chan);   
     // cprintf("This is in queu: %s\n", (p->recv_head)->message);
     }
@@ -627,7 +627,7 @@ void recv_mess(int rec_pid, char* mess){
 
         if((p->recv_queue).head==(p->recv_queue).tail){
           // cprintf("I am going to sleep\n");
-          sleep(p->chan, &ptable.lock);
+          sleep(p, &ptable.lock);
           // sleep(p->chan, p->queue_lock);
         } 
         else{
