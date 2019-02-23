@@ -567,63 +567,37 @@ void ps(void){
 // struct receiver_q msg_queue[64];
 
 void send_mess(int sender_pid, int rec_pid, char* mess){
-  //creating the message node
-  // struct message_node *newMsg = NULL;
-  // newMsg = (struct message_node*)kalloc();
-  // strncpy(newMsg->message, mess, 8);
-  // newMsg->sender_id = sender_pid;
-  // newMsg->next = NULL;
-  cprintf("sender_pid: %d\n", sender_pid);
-  cprintf("rec_pid: %d\n", rec_pid);
+  // cprintf("sender_pid: %d\n", sender_pid);
+  // cprintf("rec_pid: %d\n", rec_pid);
 
-  // struct message_node newMsg;
-  // newMsg = (struct message_node*)kalloc();
-  // strncpy(newMsg.message, mess, 8);
-  // cprintf("THIs is in queueSEND: %s\n", newMsg.message);
-  // newMsg.sender_id = sender_pid;
-  // newMsg.next = NULL;
   struct proc *p;
-  void *chanchan = 0;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == rec_pid){
-      // if(p->recv_q==NULL){
-      //   //first message
-      //   // cprintf("IF\n");
-      //   p->recv_head = &newMsg;
-      //   p->recv_last = &newMsg;
-      //   // cprintf("THIs is in queueSEND: %s\n", p->recv_head->message);
-      // }
-      // else{
-        // cprintf("ELSE\n");       
-      //   (p->recv_last)->next = &newMsg;
-      //   p->recv_last = &newMsg;
-      // } 
+
     strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
     // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
     ((p->recv_queue).sender_id)[(p->recv_queue).tail] = sender_pid; 
     (p->recv_queue).tail = ((p->recv_queue).tail+1)%NUM_MSG;
     // cprintf("New tail: %d\n", (p->recv_queue)->tail);
-    chanchan = p;
-    // wakeup(p->chan);   
+    wakeup1(p);   
     // cprintf("This is in queu: %s\n", (p->recv_head)->message);
     }
   }
   release(&ptable.lock);
-  wakeup(chanchan);
 }
 
 void recv_mess(int rec_pid, char* mess){
   struct proc *p;
-  cprintf("rec_pid IN: %d\n", rec_pid);
+  // cprintf("rec_pid IN: %d\n", rec_pid);
   
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == rec_pid){
       while(1){
           //Queue is empty. sleep the process
-          cprintf("My head: %d", (p->recv_queue).head);
-          cprintf("My tail: %d", (p->recv_queue).tail);
+          // cprintf("My head: %d", (p->recv_queue).head);
+          // cprintf("My tail: %d", (p->recv_queue).tail);
 
         if((p->recv_queue).head==(p->recv_queue).tail){
           // cprintf("I am going to sleep\n");
@@ -631,8 +605,8 @@ void recv_mess(int rec_pid, char* mess){
           // sleep(p->chan, p->queue_lock);
         } 
         else{
-          cprintf("My head: %d", (p->recv_queue).head);
-          cprintf("This is in queu: %s\n", ((p->recv_queue).messages)[(p->recv_queue).head]);
+          // cprintf("My head: %d", (p->recv_queue).head);
+          // cprintf("This is in queu: %s\n", ((p->recv_queue).messages)[(p->recv_queue).head]);
           strncpy(mess, ((p->recv_queue).messages)[(p->recv_queue).head], 8);
           (p->recv_queue).head = (((p->recv_queue).head)+1)%NUM_MSG;
           // p->recv_head = (p->recv_head)->next;
