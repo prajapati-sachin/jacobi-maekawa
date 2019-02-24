@@ -89,6 +89,7 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
 
+
   release(&ptable.lock);
 
   // Allocate kernel stack.
@@ -111,6 +112,21 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+  //copying the signal handler from parent to child
+  p->handler = 0;
+  (p->pending_signals).head=0;
+  (p->pending_signals).tail=0; 
+  //not handling a signal
+  p->handling =0;
+  // for unicast queue 
+  (p->recv_queue).head=0;
+  (p->recv_queue).tail=0;  
+
+  //for multicast queue
+  (p->recv_multi_queue).head=0;
+  (p->recv_multi_queue).tail=0;
+  // initlock(np->queue_lock, "q_lock");
+
 
   return p;
 }
@@ -149,6 +165,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  // p->handling = 0;
 
   release(&ptable.lock);
 }
@@ -199,6 +216,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
+  
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -207,8 +225,8 @@ fork(void)
     if(curproc->ofile[i])
       np->ofile[i] = filedup(curproc->ofile[i]);
   np->cwd = idup(curproc->cwd);
-
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  np->handler = curproc->handler; // copying  parent's signal handler
 
   pid = np->pid;
 
@@ -216,11 +234,6 @@ fork(void)
 
   np->state = RUNNABLE;
 
-  // np->recv_head = NULL;
-  // np->recv_last = NULL;
-  (np->recv_queue).head=0;
-  (np->recv_queue).tail=0;  
-  // initlock(np->queue_lock, "q_lock");
 
   release(&ptable.lock);
 
@@ -620,4 +633,127 @@ void recv_mess(int rec_pid, char* mess){
     }
   }
   release(&ptable.lock);    
+}
+
+void set_signal(signal_handler s){
+  struct proc *p = myproc();
+  // acquire(&ptable.lock);
+  
+  p->handler = s; 
+  // release(&ptable.lock);    
+}
+
+void send_signal(int to_pid, int signum){
+  struct proc *myp = myproc();
+  int sender_pid = myp->pid;  
+  struct proc *p;
+  // acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->pid == to_pid){
+      p->pending_signals.sig_num[p->pending_signals.tail] = signum;
+      p->pending_signals.s_pid[p->pending_signals.tail] = sender_pid;
+      p->pending_signals.tail = (p->pending_signals.tail+1)%MAX_SIG;
+    }
+     
+  } 
+  // release(&ptable.lock);    
+}
+
+void ret_signal(){
+  // acquire(&ptable.lock);
+  struct proc *p = myproc();
+  uint codesize = (uint)&sigret_code_end  - (uint)&sigret_code_start;  
+  uint original_trapframe = p->tf->esp-16-codesize;
+  memmove((void*)p->tf, (void*)original_trapframe, sizeof(struct trapframe));
+  p->handling=0;
+  // release(&ptable.lock);    
+
+}
+
+void pause_signal(){
+
+}
+
+/*
+User stack before going to signal handler
+
+-----------------------------
+|                           |
+| Old user stack            |
+-----------------------------
+|                           |
+| Original Trapframe        |
+-----------------------------
+|                           |
+| Sigret's Code             |
+-----------------------------
+| msg[7]                    |
+-----------------------------
+| msg[6]                    |
+-----------------------------
+| msg[5]                    |
+-----------------------------
+| msg[4]                    |
+-----------------------------
+| msg[3]                    |
+-----------------------------
+| msg[2]                    |
+-----------------------------
+| msg[1]                    |
+-----------------------------
+| msg[0]                    |
+-----------------------------
+| void *msg                 |
+-----------------------------
+| return address            |
+-----------------------------
+
+
+*/
+
+void handle_signals(){
+  // pushcli();
+  // acquire(&ptable.lock);
+  struct proc *p = myproc();
+  //no signal found to handle
+  if (p == 0)
+    return;
+  if(p->handling==1)
+    return;  
+  if((p->tf->cs & 3) != DPL_USER)
+    return; // CPU isn't at privilege level 3, hence in user mode
+  if(p->pending_signals.head == p->pending_signals.tail)
+    return;
+  ///////////////preparing user stack for handling signal////////////////////////////
+
+  p->handling = 1;
+  //pushing original trapframe
+  p->tf->esp-= sizeof(struct trapframe);
+  memmove((void*)p->tf->esp, (void*)p->tf, sizeof(struct trapframe));
+
+  //pushing the code of sigret
+  uint codesize = (uint)&sigret_code_end  - (uint)&sigret_code_start;
+  p->tf->esp-= codesize;
+  uint code_pointer = p->tf->esp;
+  memmove((void*)p->tf->esp, (void*)sigret_code_start, codesize);
+
+  //pushing the message
+  p->tf->esp-= 8;
+  char* m = p->recv_multi_queue.messages[p->recv_multi_queue.head];
+  p->recv_multi_queue.head = (p->recv_multi_queue.head+1)%NUM_MSG;
+  memmove((void*)p->tf->esp, (void*)m, 8);
+
+  //pushing the pointer to msg
+  *((int*)(p->tf->esp - 4)) = p->tf->esp;
+  
+  //pushing the address of sigret code(which will act as a return address)
+  *((int*)(p->tf->esp - 8)) = code_pointer;
+
+  //final esp of the user stack
+  p->tf->esp -= 8;
+  p->tf->eip = (uint)p->handler;
+
+  p->pending_signals.head = (p->pending_signals.head+1)%MAX_SIG; 
+  // popcli();
+  // release(&ptable.lock);
 }

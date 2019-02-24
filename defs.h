@@ -63,6 +63,10 @@ void            ioapicenable(int irq, int cpu);
 extern uchar    ioapicid;
 void            ioapicinit(void);
 
+//invokesigret.S
+void            sigret_code_start(void);
+void            sigret_code_end(void);
+
 // kalloc.c
 char*           kalloc(void);
 void            kfree(char*);
@@ -123,6 +127,11 @@ void            yield(void);
 void			ps(void);
 void			send_mess(int sender_pid, int rec_pid, char* mess);
 void			recv_mess(int rec_pid, char* mess);
+void 			set_signal(signal_handler s);
+void 			send_signal(int to_pid, int signum);
+void 			ret_signal(void);
+void 			pause_signal(void);
+void 			handle_signals(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -194,7 +203,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 //for toggle and print_count
 extern int toggle;
-extern int syscall_count[28];
+extern int syscall_count[32];
 
 //for unicast
 // extern int free_msg_buffer;

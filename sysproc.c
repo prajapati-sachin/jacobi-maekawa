@@ -126,7 +126,9 @@ char* name_syscalls[] = {"sys_fork", "sys_exit", "sys_wait", "sys_pipe", "sys_re
   "sys_kill", "sys_exec", "sys_fstat", "sys_chdir", "sys_dup", 
   "sys_getpid", "sys_sbrk", "sys_sleep", "sys_uptime", "sys_open", 
   "sys_write", "sys_mknod", "sys_unlink", "sys_link", "sys_mkdir", 
-  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count", "sys_send", "sys_recv", "sys_send_multi"} ;
+  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count",
+   "sys_send", "sys_recv", "sys_send_multi", "sys_sig_set", 
+   "sys_sig_send", "sys_sig_ret", "sys_sig_pause"} ;
 
 int sys_print_count(void){
   //print the non-zero counts of system calls
@@ -205,5 +207,31 @@ int sys_send_multi(void){
   cprintf("Done\n");  
 
   // argint(3, &length);
+  return 0;
+}
+
+int sys_sig_set(void){
+  char* func;
+  argptr(0, &func, 4);
+  set_signal((signal_handler)func);
+  return 0;
+}
+
+int sys_sig_send(){
+  int to_pid;
+  int signum;
+  argint(0, &to_pid);
+  argint(1, &signum);
+  send_signal(to_pid, signum);
+  return 0;
+}
+
+int sys_sig_ret(){
+  ret_signal();
+  return 0;
+}
+
+int sys_sig_pause(){
+  pause_signal();
   return 0;
 }

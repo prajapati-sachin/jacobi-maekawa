@@ -36,4 +36,8 @@ SYSCALL(print_count)
 SYSCALL(send)
 SYSCALL(recv)
 SYSCALL(send_multi)
+SYSCALL(sig_set)
+SYSCALL(sig_send)
+SYSCALL(sig_ret)
+SYSCALL(sig_pause)
 

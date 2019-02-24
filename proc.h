@@ -50,6 +50,12 @@ struct message_list{
 
 };
 
+struct signals{
+  int sig_num[MAX_SIG];
+  int s_pid[MAX_SIG];
+  int head;
+  int tail;
+};
 
 // Per-process state
 struct proc {
@@ -66,10 +72,11 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  // struct message_node *recv_head; //Head Receiving queue of this message
-  // struct message_node *recv_last; //Last Receiving queue of this message
-  struct message_list recv_queue;
-  // struct spinlock *queue_lock;
+  struct message_list recv_queue; //Receving queue for multi
+  struct message_list recv_multi_queue; //Receving queue for multi
+  signal_handler handler;         //Signal handler for recev
+  struct signals pending_signals; //array of pending signals
+  int handling;                   //true if currently handling signals
 };
 
 

@@ -110,6 +110,12 @@ extern int sys_print_count(void);
 extern int sys_send(void);
 extern int sys_recv(void);
 extern int sys_send_multi(void);
+extern int sys_sig_set(void);
+extern int sys_sig_send(void);
+extern int sys_sig_ret(void);
+extern int sys_sig_pause(void);
+
+
 
 
 static int (*syscalls[])(void) = {
@@ -141,10 +147,13 @@ static int (*syscalls[])(void) = {
 [SYS_send]          sys_send,
 [SYS_recv]          sys_recv,
 [SYS_send_multi]    sys_send_multi,
-
+[SYS_sig_set]       sys_sig_set,   
+[SYS_sig_send]      sys_sig_send,
+[SYS_sig_ret]       sys_sig_ret,
+[SYS_sig_pause]     sys_sig_pause,
 };
 
-int syscall_count[28] = {0};
+int syscall_count[32] = {0};
 int toggle=0;
 
 

@@ -30,6 +30,11 @@ int print_count(void);
 int send(int, int, void*);
 int recv(void*);
 int send_multi(int, int*, void*, int);
+int sig_set(signal_handler);
+int sig_send(int, int);
+// int return_signal();
+int sig_pause(void);
+
 
 
 // ulib.c
