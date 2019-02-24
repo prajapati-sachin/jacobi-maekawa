@@ -184,6 +184,7 @@ UPROGS=\
 	_assig1_5\
 	_assig1_6\
 	_assig1_7\
+	_mul\
 
 
 fs.img: mkfs README $(UPROGS)
@@ -262,6 +263,7 @@ EXTRA=\
 	add.c\
 	toggle.c\
 	ps.c\
+	mul.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c\

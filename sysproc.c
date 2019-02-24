@@ -93,8 +93,10 @@ sys_uptime(void)
   return xticks;
 }
 
-int sys_add(int a, int b){
-	argint(0, &a);
+int sys_add(void){
+	int a;
+  int b;
+  argint(0, &a);
 	argint(1, &b);
 	return a+b;
 }
@@ -124,7 +126,7 @@ char* name_syscalls[] = {"sys_fork", "sys_exit", "sys_wait", "sys_pipe", "sys_re
   "sys_kill", "sys_exec", "sys_fstat", "sys_chdir", "sys_dup", 
   "sys_getpid", "sys_sbrk", "sys_sleep", "sys_uptime", "sys_open", 
   "sys_write", "sys_mknod", "sys_unlink", "sys_link", "sys_mkdir", 
-  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count", "sys_send", "sys_recv"} ;
+  "sys_close", "sys_add", "sys_ps", "sys_toggle", "sys_print_count", "sys_send", "sys_recv", "sys_send_multi"} ;
 
 int sys_print_count(void){
   //print the non-zero counts of system calls
@@ -137,18 +139,20 @@ int sys_print_count(void){
 // int free_msg_buffer = 0;
 // struct receiver_q msg_queue[64];
 
-int sys_send(int sender_pid, int rec_pid, void *msg){
-	argint(0, &sender_pid);
-	argint(1, &rec_pid);
-	
-	char* msg_char = (char *)msg;
-  	argptr(2, &msg_char, 8);
+int sys_send(void){
+	int sender_pid;
+  int rec_pid;
+  // void *msg
+  argint(0, &sender_pid);
+	argint(1, &rec_pid);  	
+	char* msg_char;
+	argptr(2, &msg_char, 8);
 	
 	// char* mess;
 	// uint addmsg = (uint) msg_char;
  //  	fetchstr(addmsg, &mess);
 
-  	send_mess(sender_pid, rec_pid, msg_char);
+	send_mess(sender_pid, rec_pid, msg_char);
 	//Message Buffer is full
 	// if(free_msg_buffer>=10) return -1;
 
@@ -160,13 +164,13 @@ int sys_send(int sender_pid, int rec_pid, void *msg){
 	return 0;
 }
 
-int sys_recv(void *msg){
-  	char* msg_char = (char *)msg;
-  	argptr(0, &msg_char, 8);
+int sys_recv(void){
+	char* msg_char;
+	argptr(0, &msg_char, 8);
   	// char* mess;
 	// uint addmsg = (uint) msg_char;
 	// fetchstr(addmsg, &mess);
-  	int recevier = myproc()->pid;
+	int recevier = myproc()->pid;
 
 	recv_mess(recevier, msg_char);
 
@@ -177,4 +181,29 @@ int sys_recv(void *msg){
 	// 	}
 	// }
 	return 0;
+}
+
+int sys_send_multi(void){
+  int sender_pid;
+  int* rec_pids;
+  char* msg;
+  int length;
+  argint(0, &sender_pid);
+  argptr(2, &msg, 8);
+
+  argint(3, &length);
+
+  argptr(1, (char**)&rec_pids, 4*length);
+
+  cprintf("Recevied sender_pid: %d\n", sender_pid);
+  cprintf("Recevied length: %d\n", length);
+  for(int i =0 ; i<length; i++) {
+    cprintf("Recevied recid[%d]: %d\n",(i+1), rec_pids[i]);
+  }
+  cprintf("Recevied message: %s\n", (char*)msg);
+
+  cprintf("Done\n");  
+
+  // argint(3, &length);
+  return 0;
 }

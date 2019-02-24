@@ -194,7 +194,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 //for toggle and print_count
 extern int toggle;
-extern int syscall_count[27];
+extern int syscall_count[28];
 
 //for unicast
 // extern int free_msg_buffer;

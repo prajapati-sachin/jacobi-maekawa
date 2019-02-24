@@ -35,4 +35,5 @@ SYSCALL(toggle)
 SYSCALL(print_count)
 SYSCALL(send)
 SYSCALL(recv)
+SYSCALL(send_multi)
 
