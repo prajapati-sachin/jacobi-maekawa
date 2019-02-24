@@ -11,7 +11,10 @@ int main(void)
 	if(cid==0){
 		// This is child
 		char *msg1 = (char *)malloc(MSGSIZE);
-		// char *msg2 = (char *)malloc(MSGSIZE);
+		// int *msg2 = (int *)malloc(2*sizeof(int));
+		// *msg2 = 4;
+		// *(msg2+1) = 8;
+
 		int stat=-1;
 		// int count=0;
 		// int a = 0;
@@ -21,6 +24,7 @@ int main(void)
 		// }
 		while(stat==-1){
 			stat = recv(msg1);
+			// stat = recv(msg2);
 			// count++;
 		}
 		// stat=-1;
@@ -30,6 +34,8 @@ int main(void)
 		// }
 		// printf(1,"COOO: %d\n",count );
 		printf(1,"2 CHILD: msg recv is: %s \n", msg1 );
+		// printf(1,"2 CHILD: msg recv is: %d \n", *msg2 );
+		// printf(1,"2 CHILD: msg recv is: %d \n", *(msg2+1) );
 		// printf(1,"2 CHILD: msg2 recv is: %s \n", msg2 );
 		// printf(1,"A: %d \n", a );
 
@@ -38,9 +44,13 @@ int main(void)
 	}else{
 		// This is parent
 		char *msg_child1 = (char *)malloc(MSGSIZE);
-		msg_child1 = "P";
+		msg_child1 = "Pakapak";
 		// char *msg_child2 = (char *)malloc(MSGSIZE);
 		// msg_child2 = "masg2";
+		// int *msg_child2  = (int *)malloc(2*sizeof(int));
+		// *msg_child2 = 4;
+		// *(msg_child2+1) = 8;
+
 		// int a = 0;
 		// for(int i=0;i<1e7;i++){
 		// 	if(a%5==1) a +=4;
@@ -49,7 +59,8 @@ int main(void)
 		send(getpid(),cid,msg_child1);	
 		// send(getpid(),cid,msg_child2);	
 		printf(1,"1 PARENT: msg sent is: %s \n", msg_child1);
-		// printf(1,"1 PARENT: msg2 sent is: %s \n", msg_child2 );
+		// printf(1,"1 PARENT: msg2 sent is: %d \n", *msg_child2 );
+		// printf(1,"1 PARENT: msg2 sent is: %d \n", *(msg_child2+1) );
 		// printf(1,"A: %d \n", a );
 		
 		free(msg_child1);

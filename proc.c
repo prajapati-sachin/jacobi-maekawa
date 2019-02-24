@@ -575,7 +575,8 @@ void send_mess(int sender_pid, int rec_pid, char* mess){
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == rec_pid){
 
-    strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
+    // strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
+    memmove(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
     // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
     ((p->recv_queue).sender_id)[(p->recv_queue).tail] = sender_pid; 
     (p->recv_queue).tail = ((p->recv_queue).tail+1)%NUM_MSG;
@@ -607,7 +608,9 @@ void recv_mess(int rec_pid, char* mess){
         else{
           // cprintf("My head: %d", (p->recv_queue).head);
           // cprintf("This is in queu: %s\n", ((p->recv_queue).messages)[(p->recv_queue).head]);
-          strncpy(mess, ((p->recv_queue).messages)[(p->recv_queue).head], 8);
+          // strncpy(mess, ((p->recv_queue).messages)[(p->recv_queue).head], 8);
+          memmove(mess, ((p->recv_queue).messages)[(p->recv_queue).head], 8);
+          
           (p->recv_queue).head = (((p->recv_queue).head)+1)%NUM_MSG;
           // p->recv_head = (p->recv_head)->next;
           break;
