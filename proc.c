@@ -125,6 +125,9 @@ found:
   //for multicast queue
   (p->recv_multi_queue).head=0;
   (p->recv_multi_queue).tail=0;
+  // (p->signal_lock).locked=0;
+  // initlock(&(p->signal_lock), "multicast");
+  
   // initlock(np->queue_lock, "q_lock");
 
 
@@ -226,8 +229,9 @@ fork(void)
       np->ofile[i] = filedup(curproc->ofile[i]);
   np->cwd = idup(curproc->cwd);
   safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+  
   np->handler = curproc->handler; // copying  parent's signal handler
-
+  // initlock(&(np->recv_multi_queue.lock), "multicast");
   pid = np->pid;
 
   acquire(&ptable.lock);
@@ -637,10 +641,49 @@ void recv_mess(int rec_pid, char* mess){
 
 void set_signal(signal_handler s){
   struct proc *p = myproc();
-  // acquire(&ptable.lock);
+  acquire(&ptable.lock);
   
   p->handler = s; 
-  // release(&ptable.lock);    
+  // cprintf("%d", (int)s);
+  release(&ptable.lock);    
+}
+
+
+void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
+    for(int i=0;i<length;i++){
+	  struct proc *p;
+	  acquire(&ptable.lock);
+	  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+	    if(p->pid == rec_pids[i]){
+	    // cprintf("rec pis: %d\n", rec_pids[i]);
+	    // cprintf("head tail: %d | %d \n", (p->recv_multi_queue).head, (p->recv_multi_queue).tail);
+
+	    //Updating the message queue of the proccess
+	    // strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
+	    memmove(((p->recv_multi_queue).messages)[(p->recv_multi_queue).tail], msg, 8); 
+	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
+	    ((p->recv_multi_queue).sender_id)[(p->recv_multi_queue).tail] = sender_pid; 
+	    (p->recv_multi_queue).tail = ((p->recv_multi_queue).tail+1)%NUM_MSG;
+	    // cprintf("New tail: %d\n", (p->recv_queue)->tail);
+	    
+	    //Signalling the proccess by Updating the pending signals
+	    // cprintf("To Pid: %d\n", p->pid);
+	    send_signal(p->pid, 1);
+	    // cprintf("signal head tail: %d | %d \n", p->pending_signals.head, p->pending_signals.tail);
+	    // cprintf("Signals: %d\n", p->pending_signals.sig_num[p->pending_signals.head]);
+	    // cprintf("Signals: %d\n", p->pending_signals.s_pid[p->pending_signals.head]);
+	    
+	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
+	    // ((p->pending_signals).sig_num)[(p->pending_signals).tail] = 1; 
+	    // ((p->pending_signals).s_pid)[(p->pending_signals).tail] = sender_pid; 
+	    // (p->pending_signals).tail = ((p->pending_signals).tail+1)%MAX_SIG;
+	    
+	    // cprintf("This is in queu: %s\n", (p->recv_head)->message);
+	    }
+	  }
+	  release(&ptable.lock);
+	}
+
 }
 
 void send_signal(int to_pid, int signum){
@@ -653,7 +696,7 @@ void send_signal(int to_pid, int signum){
       p->pending_signals.sig_num[p->pending_signals.tail] = signum;
       p->pending_signals.s_pid[p->pending_signals.tail] = sender_pid;
       p->pending_signals.tail = (p->pending_signals.tail+1)%MAX_SIG;
-      wakeup(&(p->pending_signals));
+      wakeup1(p->chan);
     }
      
   } 
@@ -661,26 +704,28 @@ void send_signal(int to_pid, int signum){
 }
 
 void ret_signal(){
-  // acquire(&ptable.lock);
+  acquire(&ptable.lock);
   struct proc *p = myproc();
   uint codesize = (uint)&sigret_code_end  - (uint)&sigret_code_start;  
-  uint original_trapframe = p->tf->esp-16-codesize;
+  uint original_trapframe = p->tf->esp;
+  original_trapframe+=12;
+  original_trapframe+=codesize;
   memmove((void*)p->tf, (void*)original_trapframe, sizeof(struct trapframe));
   p->handling=0;
-  // release(&ptable.lock);    
+  release(&ptable.lock);    
 
 }
 
 void pause_signal(){
 	struct proc *p = myproc();	
 	acquire(&ptable.lock);
-	cprintf("%d %d", p->pending_signals.head, p->pending_signals.tail);  	
+	// cprintf("%d %d", p->pending_signals.head, p->pending_signals.tail);  	
 	if (p->pending_signals.head == p->pending_signals.tail){
 	  // proc->paused = 1;
 	  // sched();
 	  sleep(&(p->pending_signals), &ptable.lock);
 	}
-  release(&ptable.lock);    
+  	release(&ptable.lock);    
 
 }
 
@@ -721,79 +766,77 @@ User stack before going to signal handler
 
 */
 
-void handle_signals(){
+void handle_signals(struct trapframe *tf){
   // pushcli();
-  // acquire(&ptable.lock);
   struct proc *p = myproc();
+  // acquire(&p->signal_lock);
+  // acquire(&((p->recv_multi_queue).lock));
+
   //no signal found to handle
   if (p == 0)
     return;
   if(p->handling==1)
     return;  
-  if((p->tf->cs & 3) != DPL_USER)
+  if((tf->cs & 3) != DPL_USER)
     return; // CPU isn't at privilege level 3, hence in user mode
   if(p->pending_signals.head == p->pending_signals.tail)
     return;
   ///////////////preparing user stack for handling signal////////////////////////////
 
   p->handling = 1;
+  uint sp = p->tf->esp;
   //pushing original trapframe
-  p->tf->esp-= sizeof(struct trapframe);
-  memmove((void*)p->tf->esp, (void*)p->tf, sizeof(struct trapframe));
+  // cprintf("Initial esp:%d\n", sp);
+  // cprintf("Size of trapframe: %d\n", sizeof(struct trapframe));
+
+  sp-= sizeof(struct trapframe);
+  memmove((void*)sp, (void*)p->tf, sizeof(struct trapframe));
 
   //pushing the code of sigret
   uint codesize = (uint)&sigret_code_end  - (uint)&sigret_code_start;
-  p->tf->esp-= codesize;
-  uint code_pointer = p->tf->esp;
-  memmove((void*)p->tf->esp, (void*)sigret_code_start, codesize);
+  // cprintf("esp val1:%d\n", sp);
+  // cprintf("Code size:%d\n", codesize);
+  
+  sp -= codesize;
+  uint code_pointer = sp;
+  memmove((void*)sp, (void*)sigret_code_start, codesize);
 
   //pushing the message
-  p->tf->esp-= 8;
+  // cprintf("esp val2:%d\n", sp);
+  // cprintf("mess: %d\n", 8);
+
+  sp-= 8;
+  // cprintf("esp val3:%d\n", sp);
+  // cprintf("messages: %d\n", 8);
+
   char* m = p->recv_multi_queue.messages[p->recv_multi_queue.head];
+  // cprintf("Sent message:%s\n", m);
   p->recv_multi_queue.head = (p->recv_multi_queue.head+1)%NUM_MSG;
-  memmove((void*)p->tf->esp, (void*)m, 8);
+  memmove((void*)sp, (void*)m, 8);
 
   //pushing the pointer to msg
-  *((int*)(p->tf->esp - 4)) = p->tf->esp;
+  *((int*)(sp - 4)) = sp;
   
   //pushing the address of sigret code(which will act as a return address)
-  *((int*)(p->tf->esp - 8)) = code_pointer;
+  *((int*)(sp - 8)) = code_pointer;
 
   //final esp of the user stack
-  p->tf->esp -= 8;
-  p->tf->eip = (uint)p->handler;
+  sp -= 8;
+  // cprintf("esp val4:%d\n", sp);
+  // cprintf("pointer+ code_pointer: %d\n", 8);
 
- p->pending_signals.head = (p->pending_signals.head+1)%MAX_SIG; 
+  p->tf->esp = sp;
+  p->tf->eip = (uint)p->handler;
+  // cprintf("esp val4:%d\n", p->tf->esp);
+
+
+  p->pending_signals.head = (p->pending_signals.head+1)%MAX_SIG; 
   // popcli();
   // release(&ptable.lock);
-}
+  // release(&((p->recv_multi_queue).lock));
+  // release(&p->signal_lock);
 
-
-void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
-    for(int i=0;i<length;i++){
-	  struct proc *p;
-	  // acquire(&ptable.lock);
-	  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-	    if(p->pid == rec_pids[i]){
-	    //Updating the message queue of the proccess
-	    // strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
-	    memmove(((p->recv_multi_queue).messages)[(p->recv_multi_queue).tail], msg, 8); 
-	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
-	    ((p->recv_multi_queue).sender_id)[(p->recv_multi_queue).tail] = sender_pid; 
-	    (p->recv_multi_queue).tail = ((p->recv_multi_queue).tail+1)%NUM_MSG;
-	    // cprintf("New tail: %d\n", (p->recv_queue)->tail);
-	    
-	    //Signalling the proccess by Updating the pending signals
-	    send_signal(p->pid, 1);
-	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
-	    // ((p->pending_signals).sig_num)[(p->pending_signals).tail] = 1; 
-	    // ((p->pending_signals).s_pid)[(p->pending_signals).tail] = sender_pid; 
-	    // (p->pending_signals).tail = ((p->pending_signals).tail+1)%MAX_SIG;
-	    
-	    // cprintf("This is in queu: %s\n", (p->recv_head)->message);
-	    }
-	  }
-	  // release(&ptable.lock);
-	}
+  // release(&(p->recv_multi_queue).lock);
 
 }
+

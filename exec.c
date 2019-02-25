@@ -2,10 +2,12 @@
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
+#include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
 #include "x86.h"
 #include "elf.h"
+
 
 int
 exec(char *path, char **argv)
@@ -99,6 +101,7 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   //resetting the signal handler for new process
   curproc->handler = 0;
+  
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   switchuvm(curproc);

@@ -10,3 +10,4 @@ typedef void (*signal_handler)(void *sent_message);
 #define NUM_MSG 32
 //max no. of signal a process can hold at once
 #define MAX_SIG 5
+

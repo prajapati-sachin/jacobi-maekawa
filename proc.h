@@ -46,9 +46,10 @@ struct message_list{
  char messages[NUM_MSG][MSGSIZE];
  int head;
  int tail;
- struct spinlock *queue_lock;
-
+ // struct spinlock lock;
 };
+
+
 
 struct signals{
   int sig_num[MAX_SIG];
@@ -77,6 +78,8 @@ struct proc {
   signal_handler handler;         //Signal handler for recev
   struct signals pending_signals; //array of pending signals
   int handling;                   //true if currently handling signals
+  // struct spinlock signal_lock;
+  // struct siglock signal_lock;
 };
 
 

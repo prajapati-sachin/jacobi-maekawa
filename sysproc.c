@@ -206,7 +206,7 @@ int sys_send_multi(void){
 
   // cprintf("Done\n");  
 
-  // send_multicast(sender_pid, rec_pids, msg, length);
+  send_multicast(sender_pid, rec_pids, msg, length);
   // argint(3, &length);
   return 0;
 }

@@ -131,7 +131,7 @@ void 			set_signal(signal_handler s);
 void 			send_signal(int to_pid, int signum);
 void 			ret_signal(void);
 void 			pause_signal(void);
-void 			handle_signals(void);
+// void 			handle_signals(trapframe*);
 void			send_multicast(int sender_pid, int* rec_pids, char* msg, int length);
 
 // swtch.S
@@ -211,6 +211,7 @@ extern int syscall_count[32];
 
 
 #define NULL 0
+
 
 // struct message_node{
 // 	message_node* next;
