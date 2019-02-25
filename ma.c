@@ -1,7 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#define NP 6
+#define NP 8
 #define MSGSIZE 8
 volatile int fun_called;
 // int f_called[NP] = {1,1}
@@ -23,6 +23,7 @@ void s_handler(void* msg){
 	fun_called = 1;
 	
 	printf(1,"2 CHILD: msg recv by: %d is: %s \n",getpid() ,msg_recv );
+	// sleep(1);
 }
 
 int main(void)
@@ -45,6 +46,7 @@ int main(void)
 			// printf(1,"%dth fun\n",i);
 		}
 		printf(1,"%dth child ended\n",i);
+		sleep(1);
 		exit();
 	}else{
 		// This is parent
@@ -59,9 +61,9 @@ int main(void)
 		// for(int k=0;k<NP;k++)
 		// 	signal_send(cid[k],2,msg_child);
 
-		send_multi(getpid(),cid,msg_child,6);
+		send_multi(getpid(),cid,msg_child,8);
 		printf(1,"1 PARENT2: msg sent by:%d is: %s \n",getpid(), msg_child );
-
+		sleep(1);
 		// for(i=0;i<NP;i++){
 
 

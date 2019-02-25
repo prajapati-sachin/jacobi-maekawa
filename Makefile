@@ -185,11 +185,12 @@ UPROGS=\
 	_assig1_5\
 	_assig1_6\
 	_assig1_7\
+	_assig1_8\
 	_mul\
 
 
-fs.img: mkfs README $(UPROGS)
-	./mkfs fs.img README $(UPROGS)
+fs.img: mkfs README arr $(UPROGS)
+	./mkfs fs.img README arr $(UPROGS)
 
 -include *.d
 
@@ -261,6 +262,7 @@ EXTRA=\
 	assig1_5.c\
 	assig1_6.c\
 	assig1_7.c\
+	assig1_8.c\
 	add.c\
 	toggle.c\
 	ps.c\
