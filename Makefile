@@ -180,7 +180,7 @@ UPROGS=\
 	_ps\
 	_assig1_1\
 	_assig1_2\
-	_assig1_3\
+	_ma\
 	_assig1_4\
 	_assig1_5\
 	_assig1_6\
@@ -256,7 +256,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 EXTRA=\
 	assig1_1.c\
 	assig1_2.c\
-	assig1_3.c\
+	ma.c\
 	assig1_4.c\
 	assig1_5.c\
 	assig1_6.c\

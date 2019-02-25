@@ -1,7 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
-#define NP 4
+#define NP 6
 #define MSGSIZE 8
 volatile int fun_called;
 // int f_called[NP] = {1,1}
@@ -59,7 +59,7 @@ int main(void)
 		// for(int k=0;k<NP;k++)
 		// 	signal_send(cid[k],2,msg_child);
 
-		send_multi(getpid(),cid,msg_child,4);
+		send_multi(getpid(),cid,msg_child,6);
 		printf(1,"1 PARENT2: msg sent by:%d is: %s \n",getpid(), msg_child );
 
 		// for(i=0;i<NP;i++){
