@@ -132,6 +132,7 @@ void 			send_signal(int to_pid, int signum);
 void 			ret_signal(void);
 void 			pause_signal(void);
 void 			handle_signals(void);
+void			send_multicast(int sender_pid, int* rec_pids, char* msg, int length);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

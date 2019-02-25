@@ -197,15 +197,16 @@ int sys_send_multi(void){
 
   argptr(1, (char**)&rec_pids, 4*length);
 
-  cprintf("Recevied sender_pid: %d\n", sender_pid);
-  cprintf("Recevied length: %d\n", length);
-  for(int i =0 ; i<length; i++) {
-    cprintf("Recevied recid[%d]: %d\n",(i+1), rec_pids[i]);
-  }
-  cprintf("Recevied message: %s\n", (char*)msg);
+  // cprintf("Recevied sender_pid: %d\n", sender_pid);
+  // cprintf("Recevied length: %d\n", length);
+  // for(int i =0 ; i<length; i++) {
+  //   cprintf("Recevied recid[%d]: %d\n",(i+1), rec_pids[i]);
+  // }
+  // cprintf("Recevied message: %s\n", (char*)msg);
 
-  cprintf("Done\n");  
+  // cprintf("Done\n");  
 
+  // send_multicast(sender_pid, rec_pids, msg, length);
   // argint(3, &length);
   return 0;
 }
@@ -217,7 +218,7 @@ int sys_sig_set(void){
   return 0;
 }
 
-int sys_sig_send(){
+int sys_sig_send(void){
   int to_pid;
   int signum;
   argint(0, &to_pid);
@@ -226,12 +227,12 @@ int sys_sig_send(){
   return 0;
 }
 
-int sys_sig_ret(){
+int sys_sig_ret(void){
   ret_signal();
   return 0;
 }
 
-int sys_sig_pause(){
+int sys_sig_pause(void){
   pause_signal();
   return 0;
 }

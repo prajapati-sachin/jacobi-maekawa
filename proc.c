@@ -653,6 +653,7 @@ void send_signal(int to_pid, int signum){
       p->pending_signals.sig_num[p->pending_signals.tail] = signum;
       p->pending_signals.s_pid[p->pending_signals.tail] = sender_pid;
       p->pending_signals.tail = (p->pending_signals.tail+1)%MAX_SIG;
+      wakeup(&(p->pending_signals));
     }
      
   } 
@@ -671,6 +672,15 @@ void ret_signal(){
 }
 
 void pause_signal(){
+	struct proc *p = myproc();	
+	acquire(&ptable.lock);
+	cprintf("%d %d", p->pending_signals.head, p->pending_signals.tail);  	
+	if (p->pending_signals.head == p->pending_signals.tail){
+	  // proc->paused = 1;
+	  // sched();
+	  sleep(&(p->pending_signals), &ptable.lock);
+	}
+  release(&ptable.lock);    
 
 }
 
@@ -753,7 +763,37 @@ void handle_signals(){
   p->tf->esp -= 8;
   p->tf->eip = (uint)p->handler;
 
-  p->pending_signals.head = (p->pending_signals.head+1)%MAX_SIG; 
+ p->pending_signals.head = (p->pending_signals.head+1)%MAX_SIG; 
   // popcli();
   // release(&ptable.lock);
+}
+
+
+void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
+    for(int i=0;i<length;i++){
+	  struct proc *p;
+	  // acquire(&ptable.lock);
+	  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+	    if(p->pid == rec_pids[i]){
+	    //Updating the message queue of the proccess
+	    // strncpy(((p->recv_queue).messages)[(p->recv_queue).tail], mess, 8); 
+	    memmove(((p->recv_multi_queue).messages)[(p->recv_multi_queue).tail], msg, 8); 
+	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
+	    ((p->recv_multi_queue).sender_id)[(p->recv_multi_queue).tail] = sender_pid; 
+	    (p->recv_multi_queue).tail = ((p->recv_multi_queue).tail+1)%NUM_MSG;
+	    // cprintf("New tail: %d\n", (p->recv_queue)->tail);
+	    
+	    //Signalling the proccess by Updating the pending signals
+	    send_signal(p->pid, 1);
+	    // cprintf("Sent msg: %s\n",  ((p->recv_queue)->messages)[(p->recv_queue)->tail]);
+	    // ((p->pending_signals).sig_num)[(p->pending_signals).tail] = 1; 
+	    // ((p->pending_signals).s_pid)[(p->pending_signals).tail] = sender_pid; 
+	    // (p->pending_signals).tail = ((p->pending_signals).tail+1)%MAX_SIG;
+	    
+	    // cprintf("This is in queu: %s\n", (p->recv_head)->message);
+	    }
+	  }
+	  // release(&ptable.lock);
+	}
+
 }
