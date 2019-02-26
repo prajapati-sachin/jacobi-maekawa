@@ -114,7 +114,7 @@ int sys_toggle(void){
   }
   else if(toggle==0){
 	//clear the syscall count array
-  	for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
+  	// for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
   	//switch the toggle
     toggle=1;
   }

@@ -6,7 +6,6 @@
 int main(void)
 {
 	printf(1,"%s\n","IPC Test case");
-	
 	int cid = fork();
 	if(cid==0){
 		// This is child
@@ -67,5 +66,6 @@ int main(void)
 		// free(msg_child2);
 	}
 	
+
 	exit();
 }

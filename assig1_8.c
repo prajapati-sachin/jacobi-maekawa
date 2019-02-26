@@ -2,20 +2,27 @@
 #include "stat.h"
 #include "user.h"
 
-#define NUM_CHILD 8
-int sum = 0;
-volatile int child_no;
-int cid[NUM_CHILD];
-volatile int parent_id;
-int          msg[2];
-float         mean[2]; 
-volatile int fun_called[NUM_CHILD];
+#define CHILDS 8
 
-void get_mean( void* msg ){
-	mean[0] = *(float*)msg;
-	fun_called[child_no] = 1;
+int c_ids[CHILDS];
+volatile int parent_pid;
+volatile int this_child_id;
+float mean_sent;
+int recv_psums[CHILDS];
+float recv_pvar[CHILDS];
+float mean_received;
+volatile int sreceived[CHILDS];
+int partial_sum;
+float partial_variance;
+
+
+void message_handler(void* msg){
+	//Message received is 8 bytes
+	// memmove((void*)&mean_received, msg, 8);
+	mean_received = *(float*)msg;
+  sreceived[this_child_id] = 1;
+	return;
 }
-
 
 int
 main(int argc, char *argv[])
@@ -46,51 +53,80 @@ main(int argc, char *argv[])
   	printf(1,"first elem %d\n", arr[0]);
   
   	//----FILL THE CODE HERE for unicast sum and multicast variance
-	sig_set(&get_mean);
+  	sig_set((signal_handler)&message_handler);
+  	for(int i=0;i<CHILDS;i++) c_ids[i] = -1;
+  	parent_pid = getpid();
+  	partial_sum=0;
+    partial_variance=0;
+    
+  	// arr_sum=0;  
+    for(int i=0;i<CHILDS;i++) sreceived[i]=0;
+  	
+  	//creating n childs
+  	for(int i=0;i<CHILDS;i++){
+  		c_ids[i]=fork();
+  		if(c_ids[i]==0){
+  			this_child_id = i;
+  			break;	
+  		} 
+  	}
+  	//Parent
+  	if(getpid()==parent_pid){
+  		//Receive partial sums from childs
+  		for(int i=0;i<CHILDS;i++){
+  			recv((void*)&recv_psums[i]);
+  		  tot_sum+=recv_psums[i];
+      }
 
-	int i = 0, parent_id = getpid();
-	for( i = 0; i < NUM_CHILD; i++ ){
-		cid[i] = fork();
-		if( cid[i] == 0 ){
-			child_no = i; break;
-		}
-	}
-	// parent
-	if( getpid() == parent_id ){
-		for( i = 0; i < NUM_CHILD; i++ ){
-			recv(msg); tot_sum += msg[0];
-		}
-		mean[0] = ((float)tot_sum / size);
-		if( type == 1 ){
-			send_multi( parent_id, cid, mean, NUM_CHILD );
-			for( i = 0; i < NUM_CHILD; i++ ){
-				recv(mean); variance += mean[1];
+      printf(1, "tot Sent: %d\n", tot_sum);
+  		mean_sent = ((float)tot_sum/size);
+      // printf(1, "Mean Sent: %d\n", (int)mean_sent);
+      // printf(1, "l Sent: %d\n", (int)l);
+      // printf(1, "size Sent: %d\n", size);
+
+  		//send the mean to all child proccess
+  		send_multi(parent_pid, c_ids, (void*)&mean_sent, CHILDS);
+  		
+  		//Receive partial variance from childs
+  		for(int i=0;i<CHILDS;i++){
+  			recv((void*)&recv_pvar[i]);
+        variance+=recv_pvar[i];
+  		}
+
+  		variance = variance/size;
+  	}
+  	//Childs
+  	else{
+  	 	// int *partial_sum;
+  		// float *partial_variance;
+  		// *partial_sum = 0;
+  		int start_index = (size/CHILDS)*this_child_id;
+  		int end_index;
+  		if(this_child_id==CHILDS-1) {end_index= size;}
+  		else {end_index = start_index + (size/CHILDS);}
+  		
+      for(int i=start_index;i<end_index;i++){
+  			(partial_sum)+=arr[i];
+  		}
+  		send(getpid(), parent_pid, (void*)&partial_sum);
+
+  		//wait for the mean
+  		if(sreceived[this_child_id]==0) sig_pause();
+			
+      // printf(1, "%d\n", (int)mean_received);
+      for(int i=start_index;i<end_index;i++){
+				(partial_variance)+=(arr[i]-mean_received)*(arr[i]-mean_received);
 			}
-			variance /= size;
-		}
-		
-	}else{
-		int start = (size/NUM_CHILD)*child_no;
-		int end   = (child_no == NUM_CHILD - 1)?(size):(size/NUM_CHILD)*(child_no + 1);
-		for( i = start; i < end; i++ ){
-			msg[0] += arr[i];
-		}
-		send( getpid(), parent_id, msg );
-		if(type == 0) exit();
+		  send(getpid(), parent_pid, (void*)&partial_variance);
+      exit();
+    }
 
-		if(fun_called[child_no] == 0) sig_pause();
-		for( i = start; i < end; i++ ){
-			mean[1] += (arr[i] - mean[0])*(arr[i] - mean[0]);
-		}
-		send( getpid(), parent_id, mean );
-		exit();
-	}
-	for( i = 0; i < NUM_CHILD; i++ )
-		wait();
-  	//------------------
+    for(int i=0;i<CHILDS;i++) wait();
 
-  	if(type==0){ //unicast sum
-		printf(1,"Sum of array for file %s is %d\n", filename,tot_sum);
+ 	//------------------
+
+	if(type==0){ //unicast sum
+	printf(1,"Sum of array for file %s is %d\n", filename,tot_sum);
 	}
 	else{ //mulicast variance
 		printf(1,"Variance of array for file %s is %d\n", filename,(int)variance);
