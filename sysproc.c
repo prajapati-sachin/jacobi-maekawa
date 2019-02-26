@@ -108,13 +108,11 @@ int sys_ps(void){
 
 int sys_toggle(void){
   if(toggle==1){
-	//clear the syscall count array
-  	for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
-    toggle=0;
+	  toggle=0;
   }
   else if(toggle==0){
-	//clear the syscall count array
-  	// for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
+	  //clear the syscall count array
+  	for(int i=0;i< NELEM(syscall_count);i++) syscall_count[i]=0;
   	//switch the toggle
     toggle=1;
   }
@@ -154,7 +152,7 @@ int sys_send(void){
 	// uint addmsg = (uint) msg_char;
  //  	fetchstr(addmsg, &mess);
 
-	send_mess(sender_pid, rec_pid, msg_char);
+	return send_mess(sender_pid, rec_pid, msg_char);
 	//Message Buffer is full
 	// if(free_msg_buffer>=10) return -1;
 
@@ -163,7 +161,7 @@ int sys_send(void){
 	// strncpy(msg_buffer[free_msg_buffer].message, mess, 8);
 	// // cprintf("Sent string: %s", mess);
  //  free_msg_buffer++;
-	return 0;
+	// return 0;
 }
 
 int sys_recv(void){
@@ -174,7 +172,7 @@ int sys_recv(void){
 	// fetchstr(addmsg, &mess);
 	int recevier = myproc()->pid;
 
-	recv_mess(recevier, msg_char);
+	return recv_mess(recevier, msg_char);
 
 	// for(int i=0;i<free_msg_buffer;i++){
  //    if(msg_buffer[i].recv_id==recevier){
@@ -182,7 +180,7 @@ int sys_recv(void){
  //    	strncpy(msg_char, msg_buffer[i].message, 8);
 	// 	}
 	// }
-	return 0;
+	// return 0;
 }
 
 int sys_send_multi(void){
@@ -206,9 +204,9 @@ int sys_send_multi(void){
 
   // cprintf("Done\n");  
 
-  send_multicast(sender_pid, rec_pids, msg, length);
+  return send_multicast(sender_pid, rec_pids, msg, length);
   // argint(3, &length);
-  return 0;
+  // return 0;
 }
 
 int sys_sig_set(void){

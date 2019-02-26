@@ -125,14 +125,14 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 void			ps(void);
-void			send_mess(int sender_pid, int rec_pid, char* mess);
-void			recv_mess(int rec_pid, char* mess);
+int				send_mess(int sender_pid, int rec_pid, char* mess);
+int				recv_mess(int rec_pid, char* mess);
 void 			set_signal(signal_handler s);
 void 			send_signal(int to_pid, int signum);
 void 			ret_signal(void);
 void 			pause_signal(void);
 // void 			handle_signals(trapframe*);
-void			send_multicast(int sender_pid, int* rec_pids, char* msg, int length);
+int				send_multicast(int sender_pid, int* rec_pids, char* msg, int length);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

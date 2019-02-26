@@ -583,10 +583,10 @@ void ps(void){
 
 // struct receiver_q msg_queue[64];
 
-void send_mess(int sender_pid, int rec_pid, char* mess){
+int send_mess(int sender_pid, int rec_pid, char* mess){
   // cprintf("sender_pid: %d\n", sender_pid);
   // cprintf("rec_pid: %d\n", rec_pid);
-
+  int success=-1;
   struct proc *p;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -598,17 +598,21 @@ void send_mess(int sender_pid, int rec_pid, char* mess){
     ((p->recv_queue).sender_id)[(p->recv_queue).tail] = sender_pid; 
     (p->recv_queue).tail = ((p->recv_queue).tail+1)%NUM_MSG;
     // cprintf("New tail: %d\n", (p->recv_queue)->tail);
-    wakeup1(p->chan);   
+    wakeup1(p->chan);
+    success=1;   
     // cprintf("This is in queu: %s\n", (p->recv_head)->message);
     }
   }
+  
   release(&ptable.lock);
+  if(success==1) return 0;
+  else return -1; 
 }
 
-void recv_mess(int rec_pid, char* mess){
+int recv_mess(int rec_pid, char* mess){
   struct proc *p;
   // cprintf("rec_pid IN: %d\n", rec_pid);
-  
+  int success=-1;
   acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == rec_pid){
@@ -633,10 +637,13 @@ void recv_mess(int rec_pid, char* mess){
           break;
         }  
       }
-      
+      success=1;
+
     }
   }
   release(&ptable.lock);    
+  if(success==1) return 0;
+  else return -1;
 }
 
 void set_signal(signal_handler s){
@@ -649,8 +656,9 @@ void set_signal(signal_handler s){
 }
 
 
-void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
-    for(int i=0;i<length;i++){
+int send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
+  int success=-1;
+  for(int i=0;i<length;i++){
 	  struct proc *p;
 	  acquire(&ptable.lock);
 	  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
@@ -669,6 +677,7 @@ void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
 	    //Signalling the proccess by Updating the pending signals
 	    // cprintf("To Pid: %d\n", p->pid);
 	    send_signal(p->pid, 1);
+      success=1;
 	    // cprintf("signal head tail: %d | %d \n", p->pending_signals.head, p->pending_signals.tail);
 	    // cprintf("Signals: %d\n", p->pending_signals.sig_num[p->pending_signals.head]);
 	    // cprintf("Signals: %d\n", p->pending_signals.s_pid[p->pending_signals.head]);
@@ -683,7 +692,8 @@ void send_multicast(int sender_pid, int* rec_pids, char* msg, int length){
 	  }
 	  release(&ptable.lock);
 	}
-
+  if(success==1) return 0;
+  else return -1;  
 }
 
 void send_signal(int to_pid, int signum){
@@ -697,8 +707,7 @@ void send_signal(int to_pid, int signum){
       p->pending_signals.s_pid[p->pending_signals.tail] = sender_pid;
       p->pending_signals.tail = (p->pending_signals.tail+1)%MAX_SIG;
       wakeup1(p->chan);
-    }
-     
+    }     
   } 
   // release(&ptable.lock);    
 }
