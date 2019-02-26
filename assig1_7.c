@@ -2,70 +2,30 @@
 #include "stat.h"
 #include "user.h"
 
-
 int main(void)
 {
 	printf(1,"%s\n","IPC Test case");
+	
 	int cid = fork();
 	if(cid==0){
 		// This is child
-		char *msg1 = (char *)malloc(MSGSIZE);
-		// int *msg2 = (int *)malloc(2*sizeof(int));
-		// *msg2 = 4;
-		// *(msg2+1) = 8;
-
+		char *msg = (char *)malloc(MSGSIZE);
 		int stat=-1;
-		// int count=0;
-		// int a = 0;
-		// for(int i=0;i<1e7;i++){
-		// 	if(a%5==1) a +=4;
-		// 	else a+= 1;
-		// }
 		while(stat==-1){
-			stat = recv(msg1);
-			// stat = recv(msg2);
-			// count++;
+			stat = recv(msg);
 		}
-		// stat=-1;
-		// while(stat==-1){
-		// 	stat = recv(msg2);
-		// 	// count++;
-		// }
-		// printf(1,"COOO: %d\n",count );
-		printf(1,"2 CHILD: msg recv is: %s \n", msg1 );
-		// printf(1,"2 CHILD: msg recv is: %d \n", *msg2 );
-		// printf(1,"2 CHILD: msg recv is: %d \n", *(msg2+1) );
-		// printf(1,"2 CHILD: msg2 recv is: %s \n", msg2 );
-		// printf(1,"A: %d \n", a );
+		printf(1,"2 CHILD: msg recv is: %s \n", msg );
 
 		exit();
-
 	}else{
 		// This is parent
-		char *msg_child1 = (char *)malloc(MSGSIZE);
-		msg_child1 = "Pakapak";
-		// char *msg_child2 = (char *)malloc(MSGSIZE);
-		// msg_child2 = "masg2";
-		// int *msg_child2  = (int *)malloc(2*sizeof(int));
-		// *msg_child2 = 4;
-		// *(msg_child2+1) = 8;
-
-		// int a = 0;
-		// for(int i=0;i<1e7;i++){
-		// 	if(a%5==1) a +=4;
-		// 	else a+= 1;
-		// }
-		send(getpid(),cid,msg_child1);	
-		// send(getpid(),cid,msg_child2);	
-		printf(1,"1 PARENT: msg sent is: %s \n", msg_child1);
-		// printf(1,"1 PARENT: msg2 sent is: %d \n", *msg_child2 );
-		// printf(1,"1 PARENT: msg2 sent is: %d \n", *(msg_child2+1) );
-		// printf(1,"A: %d \n", a );
+		char *msg_child = (char *)malloc(MSGSIZE);
+		msg_child = "P";
+		send(getpid(),cid,msg_child);	
+		printf(1,"1 PARENT: msg sent is: %s \n", msg_child );
 		
-		free(msg_child1);
-		// free(msg_child2);
+		free(msg_child);
 	}
 	
-
 	exit();
 }

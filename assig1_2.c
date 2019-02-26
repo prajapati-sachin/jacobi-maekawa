@@ -5,10 +5,10 @@
 int
 main(int argc, char *argv[])
 {
-  // toggle();
-  // // fork(); 
-  // int fd = open("arr", 0);
-  // close(fd);
+  toggle();
+  // fork(); 
+  int fd = open("arr", 0);
+  close(fd);
   print_count();
   exit();
 }

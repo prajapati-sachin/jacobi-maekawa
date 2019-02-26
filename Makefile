@@ -180,14 +180,13 @@ UPROGS=\
 	_ps\
 	_assig1_1\
 	_assig1_2\
-	_ma\
+	_assig1_3\
 	_assig1_4\
 	_assig1_5\
 	_assig1_6\
 	_assig1_7\
 	_assig1_8\
-	_mul\
-
+	
 
 fs.img: mkfs README arr $(UPROGS)
 	./mkfs fs.img README arr $(UPROGS)
@@ -257,7 +256,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 EXTRA=\
 	assig1_1.c\
 	assig1_2.c\
-	ma.c\
+	assig1_3.c\
 	assig1_4.c\
 	assig1_5.c\
 	assig1_6.c\
