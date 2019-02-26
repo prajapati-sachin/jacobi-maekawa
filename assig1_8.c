@@ -2,7 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
-#define CHILDS 8
+#define CHILDS 5
 
 int c_ids[CHILDS];
 volatile int parent_pid;
@@ -20,7 +20,7 @@ void message_handler(void* msg){
 	//Message received is 8 bytes
 	// memmove((void*)&mean_received, msg, 8);
 	mean_received = *(float*)msg;
-  sreceived[this_child_id] = 1;
+ 	sreceived[this_child_id] = 1;
 	return;
 }
 
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
   	for(int i=0;i<CHILDS;i++) c_ids[i] = -1;
   	parent_pid = getpid();
   	partial_sum=0;
-    partial_variance=0;
+    	partial_variance=0;
     
   	// arr_sum=0;  
     for(int i=0;i<CHILDS;i++) sreceived[i]=0;
@@ -76,24 +76,26 @@ main(int argc, char *argv[])
   		for(int i=0;i<CHILDS;i++){
   			recv((void*)&recv_psums[i]);
   		  tot_sum+=recv_psums[i];
-      }
-
-      printf(1, "tot Sent: %d\n", tot_sum);
-  		mean_sent = ((float)tot_sum/size);
-      // printf(1, "Mean Sent: %d\n", (int)mean_sent);
-      // printf(1, "l Sent: %d\n", (int)l);
-      // printf(1, "size Sent: %d\n", size);
-
-  		//send the mean to all child proccess
-  		send_multi(parent_pid, c_ids, (void*)&mean_sent, CHILDS);
-  		
-  		//Receive partial variance from childs
-  		for(int i=0;i<CHILDS;i++){
-  			recv((void*)&recv_pvar[i]);
-        variance+=recv_pvar[i];
   		}
 
-  		variance = variance/size;
+  		// printf(1, "tot Sent: %d\n", tot_sum);
+		mean_sent = ((float)tot_sum/size);
+      	// printf(1, "Mean Sent: %d\n", (int)mean_sent);
+      	// printf(1, "l Sent: %d\n", (int)l);
+      	// printf(1, "size Sent: %d\n", size);
+
+	  	if(type==1){
+	  		//send the mean to all child proccess
+	  		send_multi(parent_pid, c_ids, (void*)&mean_sent, CHILDS);
+	  		
+	  		//Receive partial variance from childs
+	  		for(int i=0;i<CHILDS;i++){
+	  			recv((void*)&recv_pvar[i]);
+	        variance+=recv_pvar[i];
+	  		}
+
+	  		variance = variance/size;
+	  	}
   	}
   	//Childs
   	else{
@@ -105,20 +107,22 @@ main(int argc, char *argv[])
   		if(this_child_id==CHILDS-1) {end_index= size;}
   		else {end_index = start_index + (size/CHILDS);}
   		
-      for(int i=start_index;i<end_index;i++){
+      	for(int i=start_index;i<end_index;i++){
   			(partial_sum)+=arr[i];
   		}
   		send(getpid(), parent_pid, (void*)&partial_sum);
 
-  		//wait for the mean
-  		if(sreceived[this_child_id]==0) sig_pause();
-			
-      // printf(1, "%d\n", (int)mean_received);
-      for(int i=start_index;i<end_index;i++){
-				(partial_variance)+=(arr[i]-mean_received)*(arr[i]-mean_received);
-			}
-		  send(getpid(), parent_pid, (void*)&partial_variance);
-      exit();
+	  	if(type==1){
+	  		//wait for the mean
+	  		if(sreceived[this_child_id]==0) sig_pause();
+				
+	      // printf(1, "%d\n", (int)mean_received);
+	      	for(int i=start_index;i<end_index;i++){
+					(partial_variance)+=(arr[i]-mean_received)*(arr[i]-mean_received);
+			}		
+			send(getpid(), parent_pid, (void*)&partial_variance);
+    	}
+     	exit();
     }
 
     for(int i=0;i<CHILDS;i++) wait();
