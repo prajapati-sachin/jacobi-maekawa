@@ -41,12 +41,10 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 // #define NUM_MSG 32
 
 struct message_list{
- // struct message_node* next;
  int sender_id[NUM_MSG];
  char messages[NUM_MSG][MSGSIZE];
  int head;
  int tail;
- // struct spinlock lock;
 };
 
 
