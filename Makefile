@@ -175,9 +175,6 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
-	_add\
-	_toggle\
-	_ps\
 	_assig1_1\
 	_assig1_2\
 	_assig1_3\
@@ -262,10 +259,6 @@ EXTRA=\
 	assig1_6.c\
 	assig1_7.c\
 	assig1_8.c\
-	add.c\
-	toggle.c\
-	ps.c\
-	mul.c\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
 	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c\
