@@ -6,10 +6,10 @@
 #include<sys/wait.h>
 
 
-#define N 10
+#define N 11
 #define E 0.00001
 #define T 100.0
-#define P 2
+#define P 6
 #define L 20000
 
 float fabsm(float a){
@@ -276,16 +276,16 @@ int main(int argc, char *argv[]){
 			
 			//Done signal send all values to parent and exit
 			if(order==1){
-				if(this_child_id==1){
-					for(int i=start_index;i<=end_index;i++){
-						for(int j=0;j<N;j++){
-							printf("%d ", (int)u[i][j]);
-						}
-						printf("\n");
-						// write(cp_pipe[this_child_id][1], u[i], 4*N);
-					}
-				}
-				for(int i=start_index;i<end_index;i++){
+				// if(this_child_id==1){
+				// 	for(int i=start_index;i<=end_index;i++){
+				// 		for(int j=0;j<N;j++){
+				// 			printf("%d ", (int)u[i][j]);
+				// 		}
+				// 		printf("\n");
+				// 		// write(cp_pipe[this_child_id][1], u[i], 4*N);
+				// 	}
+				// }
+				for(int i=start_index;i<=end_index;i++){
 					write(cp_pipe[this_child_id][1], u[i], 4*N);
 				}
 				// Closing opened pipes
@@ -320,19 +320,19 @@ finalstep:
 		// if(i==P-1) {end_index= N-1;}
 		// else {end_index = start_index + ((N-2)/P);}
 
-		for(int j=start_index; j<end_index; j++){
-			int values[N];
-			read(cp_pipe[i][0], values, N);
-			for(int k=0;k<N;k++) u[j][k] = values[k];
+		for(int j=start_index; j<=end_index; j++){
+			// int values[N];
+			read(cp_pipe[i][0], u[j], 4*N);
+			// for(int k=0;k<N;k++) u[j][k] = values[k];
 		}
 	}
 
-	// for(int i=0;i<N;i++){
-	// 	for(int j=0; j<N;j++){
-	// 		printf("%d ", (int)u[i][j]);
-	// 	}
-	// 	printf("\n");
-	// }
+	for(int i=0;i<N;i++){
+		for(int j=0; j<N;j++){
+			printf("%f ", u[i][j]);
+		}
+		printf("\n");
+	}
 
 	for(int i=0;i<P-1;i++){
 		close(pc_pipe[i][1]);
