@@ -1,12 +1,15 @@
-#include "types.h"
-#include "stat.h"
-#include "user.h"
+#include<stdio.h> 
+#include<stdlib.h> 
+#include<unistd.h> 
+#include<sys/types.h> 
+#include<string.h> 
+#include<sys/wait.h>
 
 
 #define N 11
 #define E 0.00001
 #define T 100.0
-#define P 6
+#define P 3
 #define L 20000
 
 float fabsm(float a){
@@ -15,69 +18,32 @@ float fabsm(float a){
 return a;
 }
 
-
 int c_ids[P];
 volatile int parent_pid;
 volatile int this_child_id;
-int recv_tokens[P][2];
-int ghost_above[N];
-int ghost_below[N];
-//1 to carry on
-//2 to exit
-int permission[P];
 
-int main(int argc, char *argv[])
-{
-//	Taking input from inp file //////////////////////////
-
-	// if(argc< 2){
-	// 	printf(1,"Need input filename\n");
-	// 	exit();
-	// }
-	// char *filename;
-	// filename=argv[1];
-	// int fd = open(filename, 0);
-	// char c;
-	// read(fd, &c, 1);
-	// N = c-'0';
-	// read(fd, &c, 1);
-	// E = c-'0';
-	// read(fd, &c, 1);
-	// T = c-'0';
-	// read(fd, &c, 1);
-	// P = c-'0';
-	// read(fd, &c, 1);
-	// L = c-'0';
- //  	close(fd);
-
-/////////////////////////////////////////////////////////
-//	Initialising Pipes(total 4N-2)		
+int main(int argc, char *argv[]){
+	// Initialising Pipes(total 4N-2)		
 	int pc_pipe[P][2];
 	int cp_pipe[P][2];
 	int cc_up[P-1][2];
 	int cc_down[P-1][2];
 
 
-	float diff;
 	int i,j;
 	float mean;
 	float u[N][N];
 	float w[N][N];
-	int *carryon;
-	*carryon=1;
-	int *exit;
-	*exit=1;
-	int count=0;
 	mean = 0.0;
 	
-	//Making pipes
+	// Making pipes
 	for(int i=0;i<P;i++){
 		if(pipe(pc_pipe[i])<0) printf("Error creating pipe\n");
 		if(pipe(cp_pipe[i])<0) printf("Error creating pipe\n");
 	}
 	for(int i=0;i<P-1;i++){
 		if(pipe(cc_up[i])<0) printf("Error creating pipe\n");
-		if(pipe(cp_down[i])<0) printf("Error creating pipe\n");
+		if(pipe(cc_down[i])<0) printf("Error creating pipe\n");
 	}
 
 	//Init array values
@@ -87,16 +53,11 @@ int main(int argc, char *argv[])
 		mean += u[i][0] + u[i][N-1] + u[0][i] + u[N-1][i];
 	}
 	mean /= (4.0 * N);
-	for (i = 1; i < N-1; i++ )
+	for (i = 1; i < N-1; i++ ){
 		for ( j= 1; j < N-1; j++) u[i][j] = mean;
-
-	//Setting initial token values
-  	for(int i=0;i<P;i++){
-		recv_tokens[i]=0;
 	}
 
-	parent_pid = getpid();
-	
+	parent_pid = getpid();	
 
   	//creating n childs
   	for(int i=0;i<P;i++){
@@ -113,8 +74,8 @@ int main(int argc, char *argv[])
 		for(int i=0;i<P-1;i++){
 			close(cc_up[i][0]);
 			close(cc_up[i][1]);
-			close(cp_down[i][0]);
-			close(cp_down[i][1]);
+			close(cc_down[i][0]);
+			close(cc_down[i][1]);
 		}
 
 		//closing unnnecary parent to child pipe for parent pipes: closing p->c(read) and c->p(write)
@@ -123,130 +84,154 @@ int main(int argc, char *argv[])
 			close(cp_pipe[i][1]);
 		}
 
-		int address[P][2];
-		// Sending the address of all neighbours to whom to send ghost values
-		for(int i=0;i<P;i++){
-			if(i==0){
-				address[i][1]=0;
-				address[i][2]=c_ids[i+1];
-				send(parent_pid, c_ids[i], address[i]);
-			}
-			else if(i==P){
-				address[i][1]=c_ids[i-1];
-				address[i][2]=0;
-				send(parent_pid, c_ids[i], address[i]);  					
-			}
-			else{
-				address[i][1]=c_ids[i-1];
-				address[i][2]=c_ids[i+1];
-				send(parent_pid, c_ids[i], address[i]);
-			}
-		}
-  		for(;;){
+		for(int i=0; i<P; i++) printf("Child No: %d= %d\n", i, c_ids[i]);
 
-  			//Recv tokens(max diff) from each process
+		int recv_diff[P];
+		int count=0;
+		int carryon=1;
+		int done=1;
+
+  		for(;;){
+  			//Recv diff(max diff) from each process  		
   			for(int i=0;i<P;i++){
-  				recv((void*)recv_tokens[i]);
-  				// recv_tokens[i]=0;
+  				read(cp_pipe[i][0], &recv_diff[i], 4);
   			}
   			count++;
 
   			//Find the maximum of all received
   			float max_dif = 0;
   			for(int i=0;i<P;i++){
-  				if(recv_tokens[i][1]>max_dif) max_dif=recv_tokens[i][1];
+  				if(recv_diff[i]>max_dif) max_dif=recv_diff[i];
   			}
 
   			//check exiting condition
-  			if(max_dif<=E || count>L) {
+  			if(max_dif<=E || count>L){
   				//signal childs for exiting
 	  			for(int i=0;i<P;i++){
-	  				send(parent_pid, c_ids[i], (void*)exit);
+					write(pc_pipe[i][1], &done, 4);
+
 	  			}
-  				goto done;
+  				goto finalstep;
   			}  			 			
 
   			//else signal each process to carry on
   			for(int i=0;i<P;i++){
-  				send(parent_pid, c_ids[i], (void*)carryon);
+					write(pc_pipe[i][1], &carryon, 4);
   			}
   		}
   	}
 	//Childs(keep calculating the values)
 	else{
-		// int upperpid=0;
-		// int lowerpid=0;
+		// closing unnnecary parent to child pipe for child pipes
+		for(int i=0;i<P-1;i++){
+			if(i==this_child_id) continue;
+			close(pc_pipe[i][0]);
+			close(pc_pipe[i][1]);
+			close(cp_pipe[i][0]);
+			close(cp_pipe[i][1]);
+		}
+
+		//closing unnnecary parent to child pipe for parent pipes: closing p->c(read) and c->p(write)
+		for(int i=0;i<P-1;i++){
+			if(i==this_child_id || (i-1)==this_child_id) continue;
+			close(cc_up[i][0]);
+			close(cc_up[i][1]);
+			close(cc_down[i][0]);
+			close(cc_down[i][1]);
+		}
 
 		//row wise division
 		int start_index = ((N-2)/P)*this_child_id+1;
   		int end_index;
-  		if(this_child_id==P-1) {end_index= N-2;}
+  		if(this_child_id==P-1) {end_index= N-1;}
   		else {end_index = start_index + ((N-2)/P);}
 
-  		// Recv the address of negibours, neighbours[0] is the upperpid and negihbours[1] is the lowerpid, 0 in case they are not present 
-  		int negibours[2];
-  		recv((void*)negibours);
-  		// upperpid = negibours[1];
-  		// lowerpid = negibours[2];
+		int upperpid = this_child_id-1;
+		int lowerpid = this_child_id+1;
+		if(this_child_id==0) upperpid=0;
+		if(this_child_id==P-1) lowerpid=0;
 
-  		// Send the ghost values to upper and lower process
-  		for(int i=0;i<2;i++){
-			if(negibours[i]==0) continue;  				
-  			for(int k=1;k<N-1;k++){
-  				int tosend = u[][]
-  				send(getpid(), negibours[i], )
-  			}
-  		}
+		// Variable to receive ghost values
+		int ghost_above[N];
+		int ghost_below[N];
+		float diff;
+		int order;
 
+		for(;;){
+			diff=0.0;
+			
+			//Sending ghost values to upper and lower process
+			if(this_child_id-1>=0){
+				write(cc_up[this_child_id-1][1], u[start_index], N);
+			}
+			if(this_child_id+1<P){
+				write(cc_down[this_child_id][1], u[end_index], N);	
+			}
 
-  		float diff;
-  		for(;;){
-  			diff=0;
-  			for(i =start_index ; i < end_index; i++){
-  				for(j =1 ; j < N-1; j++){
-  					w[i][j] = ( u[i-1][j] + u[i+1][j]+
-  						    u[i][j-1] + u[i][j+1])/4.0;
-  					if( fabsm(w[i][j] - u[i][j]) > diff )
-  						diff = fabsm(w[i][j]- u[i][j]);	
-  				}
-  			}
-  			//send diff to parent
-  			send(getpid(), parent_pid, (void*)&diff);
-  			//recv barrier permission from parent
-  			recv((void*)&permission[this_child_id]);
-  			//check for exiting condition
-  			if(permission[this_child_id]==2) exit();  			
-  		}
+			//Receiving ghost values from upper and lower process
+			if(this_child_id-1>=0){
+				read(cc_down[this_child_id-1][0], ghost_above, N);
+			}
+			if(this_child_id+1<P){
+				read(cc_up[this_child_id][0], ghost_below, N);
+			}			
 
+			//Calculate new values
+			for(int i=start_index;i<end_index;i++){
+				for(int j=1;j<N-1;j++){
+					if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+					else if(i==end_index-1) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
+					else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+					if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+				}
+			}
+
+			//Copy the value to u
+			for(int i=start_index;i<end_index;i++)
+				for(int j=1;j<N-1;j++) u[i][j]=w[i][j];
+
+			//Send the value of diff to parent
+			write(cp_pipe[this_child_id][1], &diff,  4);
+
+			//Recv order from parent
+			read(pc_pipe[this_child_id][0], &order, 4);
+			
+			//Done signal send all values to parent and exit
+			if(order==1){
+				for(int i=start_index;i<end_index;i++){
+					write(cp_pipe[this_child_id][1], u[i], N);
+				}
+				exit(0);
+			}			
+			
+		}
+
+		exit(0);
 	}
 
-	// for(;;){
-	// 	diff = 0.0;
-	// 	for(i =1 ; i < N-1; i++){
-	// 		for(j =1 ; j < N-1; j++){
-	// 			w[i][j] = ( u[i-1][j] + u[i+1][j]+
-	// 				    u[i][j-1] + u[i][j+1])/4.0;
-	// 			if( fabsm(w[i][j] - u[i][j]) > diff )
-	// 				diff = fabsm(w[i][j]- u[i][j]);	
-	// 		}
-	// 	}
-	//     count++;
-	       
-	// 	if(diff<= E || count > L){ 
-	// 		break;
-	// 	}
-	
-	// 	for (i =1; i< N-1; i++)	
-	// 		for (j =1; j< N-1; j++) u[i][j] = w[i][j];
-	// }
-	// for(i =0; i <N; i++){
-	// 	for(j = 0; j<N; j++)
-	// 		printf(1,"%d ",((int)u[i][j]));
-	// 	printf(1,"\n");
-	// }
+finalstep:
+	//Receive from P process
+	for(int i=0;i<P;i++){
+		int start_index = ((N-2)/P)*i+1;
+		int end_index;
+		if(i==P-1) {end_index= N-1;}
+		else {end_index = start_index + ((N-2)/P);}
 
-done:
-    for(int i=0;i<P;i++) wait();	
-	exit();
+		for(int j=start_index; j<end_index; j++){
+			int values[N];
+			read(cp_pipe[i][0], values, N);
+			for(int k=0;k<N;k++) u[j][k] = values[k];
+		}
+	}
+
+	for(int i=0;i<N;i++){
+		for(int j=0; j<N;j++){
+			printf("%d ", (int)u[i][j]);
+		}
+		printf("\n");
+	}
+
+    for(int i=0;i<P;i++) wait(NULL);	
+	exit(1);
 
 }
