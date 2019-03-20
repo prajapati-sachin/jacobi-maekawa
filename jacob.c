@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	char *filename;
 	filename=argv[1];
 	// int type = atoi(argv[1]);
-	printf(1,"Filename is %s\n", filename);
+	// printf(1,"Filename is %s\n", filename);
 
 	int fd = open(filename, 0);
 
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 					write(pc_pipe[i][1], &done, 4);
 
 	  			}
-  				printf(1, "%d\n",count );
+  				// printf(1, "%d\n",count );
 				//Receive from P process
 				for(int i=0;i<P;i++){
 					int start_index = start_indices[i];
