@@ -2,6 +2,7 @@
 #include "stat.h"
 #include "user.h"
 
+
 #define CHILDS 5
 
 int c_ids[CHILDS];

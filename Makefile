@@ -181,7 +181,7 @@ UPROGS=\
 
 
 fs.img: mkfs README arr $(UPROGS)
-	./mkfs fs.img README arr $(UPROGS)
+	./mkfs fs.img README jac.inp $(UPROGS)
 
 -include *.d
 
