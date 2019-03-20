@@ -6,7 +6,7 @@
 #include<sys/wait.h>
 
 
-// #define N 11
+// #define N 11 
 // #define E 0.00001
 // #define T 100.0
 // #define P 10
