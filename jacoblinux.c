@@ -9,7 +9,7 @@
 #define N 11
 #define E 0.00001
 #define T 100.0
-#define P 6
+#define P 10
 #define L 20000
 
 float fabsm(float a){
@@ -229,6 +229,7 @@ int main(int argc, char *argv[]){
   		// if(this_child_id==P-1) {end_index= N-1;}
   		// else {end_index = start_index + ((N-2)/P);}
 
+  		if(start_index>end_index) exit(0);
 
 		// int upperpid = this_child_id-1;
 		// int lowerpid = this_child_id+1;
@@ -259,54 +260,71 @@ int main(int argc, char *argv[]){
 
 			// printf("Child Num: %d\n", this_child_id);
 
+			// //Receiving ghost values from upper and lower process
+			// if(this_child_id-1>=0){
+			// 	read(cc_down[this_child_id-1][0], ghost_above, 4*N);
+			// }
+			// if(this_child_id+1<P){
+			// 	read(cc_up[this_child_id][0], ghost_below, 4*N);
+			// }			
 			//Receiving ghost values from upper and lower process
 			if(this_child_id-1>=0){
-				read(cc_down[this_child_id-1][0], ghost_above, 4*N);
+				read(cc_down[this_child_id-1][0], u[start_index-1], 4*N);
 			}
 			if(this_child_id+1<P){
-				read(cc_up[this_child_id][0], ghost_below, 4*N);
-			}			
+				read(cc_up[this_child_id][0], u[end_index+1], 4*N);
+			}
 
 			// if(this_child_id==0)
 				// for(int i=0;i<N;i++) printf("Received ghost values: %f\n", ghost_below[i]);
 
-			//Calculate new values
-			if(this_child_id==0){
-				for(int i=start_index;i<=end_index;i++){
-					for(int j=1;j<N-1;j++){
-						if(start_index==end_index) w[i][j] = (u[i-1][j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
-						else{
-							if(i==start_index) w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-							else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
-							else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-							if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
-						}
-					}
+			// //Calculate new values
+			// if(this_child_id==0){
+			// 	for(int i=start_index;i<=end_index;i++){
+			// 		for(int j=1;j<N-1;j++){
+			// 			if(start_index==end_index) w[i][j] = (u[i-1][j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 			else{
+			// 				if(i==start_index) w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 				else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
+			// 				else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 				if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+			// 			}
+			// 		}
+			// 	}
+			// }
+			// else if(this_child_id==P-1){
+			// 	for(int i=start_index;i<=end_index;i++){
+			// 		for(int j=1;j<N-1;j++){
+			// 			if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 			else if(i==end_index) w[i][j] = (u[i-1][j] + u[i+1][j] + u[i][j-1] + u[i][j+1])/4.0;
+			// 			else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 			if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+			// 		}
+			// 	}
+			// }
+			// else{
+			// 	for(int i=start_index;i<=end_index;i++){
+			// 		for(int j=1;j<N-1;j++){
+			// 			if(start_index==end_index) w[i][j] = (ghost_above[j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 			else{
+			// 				if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 				else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
+			// 				else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+			// 				if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+			// 			}
+			// 		}
+			// 	}
+			// }
+			// diff = 0.0;
+			for(i =start_index ; i <= end_index; i++){
+				for(j =1 ; j < N-1; j++){
+					w[i][j] = ( u[i-1][j] + u[i+1][j]+
+						    u[i][j-1] + u[i][j+1])/4.0;
+					if( fabsm(w[i][j] - u[i][j]) > diff )
+						diff = fabsm(w[i][j]- u[i][j]);	
 				}
 			}
-			else if(this_child_id==P-1){
-				for(int i=start_index;i<=end_index;i++){
-					for(int j=1;j<N-1;j++){
-						if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						else if(i==end_index) w[i][j] = (u[i-1][j] + u[i+1][j] + u[i][j-1] + u[i][j+1])/4.0;
-						else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
-					}
-				}
-			}
-			else{
-				for(int i=start_index;i<=end_index;i++){
-					for(int j=1;j<N-1;j++){
-						if(start_index==end_index) w[i][j] = (ghost_above[j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
-						else{
-							if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-							else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
-							else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-							if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
-						}
-					}
-				}
-			}
+
 
 			// printf("Diff from child %d: %f\n", this_child_id, diff);
 			//Copy the value to u
@@ -369,26 +387,7 @@ int main(int argc, char *argv[]){
 				// close(cc_down[this_child_id-1][1]);
 
 				exit(0);
-			}
-			// //Sending ghost values to upper and lower process
-			// if(this_child_id-1>=0){
-			// 	write(cc_up[this_child_id-1][1], u[start_index], 4*N);
-			// }
-			// if(this_child_id+1<P){
-			// 	write(cc_down[this_child_id][1], u[end_index], 4*N);	
-			// }
-
-			// // printf("Child Num: %d\n", this_child_id);
-
-			// //Receiving ghost values from upper and lower process
-			// if(this_child_id-1>=0){
-			// 	read(cc_down[this_child_id-1][0], ghost_above, 4*N);
-			// }
-			// if(this_child_id+1<P){
-			// 	read(cc_up[this_child_id][0], ghost_below, 4*N);
-			// }			
-			
-			
+			}			
 		}
 
 		exit(0);
