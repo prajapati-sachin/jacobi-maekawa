@@ -6,11 +6,11 @@
 #include<sys/wait.h>
 
 
-#define N 11
-#define E 0.00001
-#define T 100.0
+// #define N 11
+// #define E 0.00001
+// #define T 100.0
 // #define P 10
-#define L 20000
+// #define L 20000
 
 float fabsm(float a){
 	if(a<0)
@@ -20,14 +20,42 @@ return a;
 
 
 int main(int argc, char *argv[]){
-	// Initialising Pipes(total 4N-2)		
-	int P = 6;
+	int N; 
+	float E; 
+	float T; 
+	int P; 
+	int L;
+
+	if(argc<2){
+		printf("Name of input file required\n");
+		exit(1);
+	}	
+
+
+  	FILE *fp;
+    fp = fopen(argv[1],"r"); 
+	
+
+
+    fscanf(fp, "%d", &N);
+    fscanf(fp, "%f", &E);
+    fscanf(fp, "%f", &T);
+    fscanf(fp, "%d", &P);
+    fscanf(fp, "%d", &L);
+
+    // printf("%d\n", N);
+    // printf("%f\n", E);
+    // printf("%f\n", T);
+    // printf("%d\n", P);
+    // printf("%d\n", L);
+
 
 	int c_ids[P];
 	int parent_pid;
 	int this_child_id;
 
 
+	// Initialising Pipes(total 4N-2)		
 	int pc_pipe[P][2];
 	int cp_pipe[P][2];
 	int cc_up[P-1][2];
