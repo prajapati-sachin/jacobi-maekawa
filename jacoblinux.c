@@ -9,7 +9,7 @@
 #define N 11
 #define E 0.00001
 #define T 100.0
-#define P 10
+// #define P 10
 #define L 20000
 
 float fabsm(float a){
@@ -18,12 +18,16 @@ float fabsm(float a){
 return a;
 }
 
-int c_ids[P];
-volatile int parent_pid;
-volatile int this_child_id;
 
 int main(int argc, char *argv[]){
 	// Initialising Pipes(total 4N-2)		
+	int P = 6;
+
+	int c_ids[P];
+	int parent_pid;
+	int this_child_id;
+
+
 	int pc_pipe[P][2];
 	int cp_pipe[P][2];
 	int cc_up[P-1][2];
@@ -57,12 +61,15 @@ int main(int argc, char *argv[]){
 		for ( j= 1; j < N-1; j++) u[i][j] = mean;
 	}
 
-	// for(int i=0;i<N;i++){
-	// 	for(int j=0; j<N;j++){
-	// 		printf("%d ", (int)u[i][j]);
-	// 	}
-	// 	printf("\n");
-	// }
+	if(N<=2){
+		for(int i=0;i<N;i++){
+			for(int j=0; j<N;j++){
+				printf("%d ", (int)u[i][j]);
+			}
+			printf("\n");
+		}
+		exit(1);
+	}
 
 	int works[P];
 	int start_indices[P];
@@ -76,11 +83,17 @@ int main(int argc, char *argv[]){
 		works[i%P]++;
 	}
 
+	// if((N-2)<0) works[0] = N-2;
+
 	start_indices[0]=1;
 	end_indices[0]=works[0];
+
+	int unused=0;
+
 	for(int i=1;i<P;i++){
 		start_indices[i] = end_indices[i-1]+1;
 		end_indices[i] = start_indices[i] + works[i]-1;
+		if(start_indices[i]>end_indices[i]) unused+=1;
 	}
 
 	parent_pid = getpid();	
@@ -92,6 +105,9 @@ int main(int argc, char *argv[]){
 	// 	end_indices[i] = start_indices[i] + works[i]-1;
 	// }	
 
+	// printf("%d\n", unused);
+
+	P -= unused;;
   	//creating n childs
   	for(int i=0;i<P;i++){
   		c_ids[i]=fork();
@@ -149,7 +165,7 @@ int main(int argc, char *argv[]){
 					write(pc_pipe[i][1], &done, 4);
 
 	  			}
-  				printf("%d\n",count );
+  				// printf("%d\n",count );
 				//Receive from P process
 				for(int i=0;i<P;i++){
 					int start_index = start_indices[i];
@@ -231,14 +247,15 @@ int main(int argc, char *argv[]){
 
   		if(start_index>end_index) exit(0);
 
+
 		// int upperpid = this_child_id-1;
 		// int lowerpid = this_child_id+1;
 		// if(this_child_id==0) upperpid=0;
 		// if(this_child_id==P-1) lowerpid=0;
 
 		// Variable to receive ghost values
-		float ghost_above[N];
-		float ghost_below[N];
+		// float ghost_above[N];
+		// float ghost_below[N];
 		float diff;
 		int order;
 
