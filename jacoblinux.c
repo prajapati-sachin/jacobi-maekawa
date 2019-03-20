@@ -87,9 +87,9 @@ int main(int argc, char *argv[]){
 
 	// for(int i=0;i<P;i++){
 	// 	printf("works[%d] = %d\n",i, works[i]);
-	// 	printf("Child: %d- Start= %d, End= %d\n", i, start_index[i], end_index[i]);
-	// 	start_index[i] = end_index[i-1]+1;
-	// 	end_index[i] = start_index[i] + works[i]-1;
+	// 	printf("Child: %d- Start= %d, End= %d\n", i, start_indices[i], end_indices[i]);
+	// 	start_indices[i] = end_indices[i-1]+1;
+	// 	end_indices[i] = start_indices[i] + works[i]-1;
 	// }	
 
   	//creating n childs
@@ -150,7 +150,35 @@ int main(int argc, char *argv[]){
 
 	  			}
   				printf("%d\n",count );
-  				goto finalstep;
+				//Receive from P process
+				for(int i=0;i<P;i++){
+					int start_index = start_indices[i];
+					int end_index = end_indices[i];;
+					// if(i==P-1) {end_index= N-1;}
+					// else {end_index = start_index + ((N-2)/P);}
+
+					for(int j=start_index; j<=end_index; j++){
+						// int values[N];
+						read(cp_pipe[i][0], u[j], 4*N);
+						// for(int k=0;k<N;k++) u[j][k] = values[k];
+					}
+				}
+
+				for(int i=0;i<N;i++){
+					for(int j=0; j<N;j++){
+						printf("%d ", (int)u[i][j]);
+					}
+					printf("\n");
+				}
+
+				for(int i=0;i<P-1;i++){
+					close(pc_pipe[i][1]);
+					close(cp_pipe[i][0]);
+				}
+
+			    for(int i=0;i<P;i++) wait(NULL);	
+				exit(1);
+
   			}  			 			
 
   			//else signal each process to carry on
@@ -182,6 +210,19 @@ int main(int argc, char *argv[]){
 			close(cc_down[i][1]);
 		}
 
+		if(this_child_id-1>=0){
+			close(cc_up[this_child_id-1][0]);			
+			close(cc_down[this_child_id-1][1]);			
+			// write(cc_up[this_child_id-1][1], u[start_index], 4*N);
+		}
+
+
+		if(this_child_id+1<P){
+			close(cc_up[this_child_id][1]);			
+			close(cc_down[this_child_id][0]);			
+			// write(cc_up[this_child_id-1][1], u[start_index], 4*N);
+		}	
+
 		//row wise division
 		int start_index = start_indices[this_child_id];
   		int end_index = end_indices[this_child_id];
@@ -200,13 +241,13 @@ int main(int argc, char *argv[]){
 		float diff;
 		int order;
 
-		// printf("Stuck herre\n" );
 
 		for(;;){
 			diff=0.0;
 			
-			// if(this_child_id==1)
-				// for(int i=0;i<N;i++) printf("%f ", u[start_index][i]);
+			// printf("Stuck herre\n" );
+			// if(this_child_id==4)
+			// 	for(int i=0;i<N;i++) printf("%f ", u[start_index][i]); printf("\n");;
 			
 			//Sending ghost values to upper and lower process
 			if(this_child_id-1>=0){
@@ -233,10 +274,13 @@ int main(int argc, char *argv[]){
 			if(this_child_id==0){
 				for(int i=start_index;i<=end_index;i++){
 					for(int j=1;j<N-1;j++){
-						if(i==start_index) w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
-						else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+						if(start_index==end_index) w[i][j] = (u[i-1][j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
+						else{
+							if(i==start_index) w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+							else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
+							else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+							if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+						}
 					}
 				}
 			}
@@ -253,10 +297,13 @@ int main(int argc, char *argv[]){
 			else{
 				for(int i=start_index;i<=end_index;i++){
 					for(int j=1;j<N-1;j++){
-						if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
-						else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
-						if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+						if(start_index==end_index) w[i][j] = (ghost_above[j] + ghost_below[j]+ u[i][j-1] + u[i][j+1])/4.0;
+						else{
+							if(i==start_index) w[i][j] = (ghost_above[j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+							else if(i==end_index) w[i][j] = (u[i-1][j] + ghost_below[j] + u[i][j-1] + u[i][j+1])/4.0;
+							else w[i][j] = (u[i-1][j] + u[i+1][j]+ u[i][j-1] + u[i][j+1])/4.0;
+							if(fabsm(w[i][j]-u[i][j])> diff) diff = fabsm(w[i][j]-u[i][j]); 
+						}
 					}
 				}
 			}
@@ -265,6 +312,9 @@ int main(int argc, char *argv[]){
 			//Copy the value to u
 			for(int i=start_index;i<=end_index;i++)
 				for(int j=1;j<N-1;j++) u[i][j]=w[i][j];
+
+
+
 
 			//Send the value of diff to parent
 			write(cp_pipe[this_child_id][1], &diff,  4);
@@ -290,56 +340,88 @@ int main(int argc, char *argv[]){
 				}
 				// Closing opened pipes
 				close(pc_pipe[this_child_id][0]);
-				close(pc_pipe[this_child_id][1]);
-				close(cp_pipe[this_child_id][0]);
+				// close(pc_pipe[this_child_id][1]);
+				// close(cp_pipe[this_child_id][0]);
 				close(cp_pipe[this_child_id][1]);
 
-				close(cc_up[this_child_id][0]);
-				close(cc_up[this_child_id][1]);
-				close(cc_up[this_child_id-1][0]);
-				close(cc_up[this_child_id-1][1]);
+			
+				if(this_child_id-1>=0){
+					close(cc_up[this_child_id-1][1]);			
+					close(cc_down[this_child_id-1][0]);			
+					// write(cc_up[this_child_id-1][1], u[start_index], 4*N);
+				}
 
-				close(cc_down[this_child_id][0]);
-				close(cc_down[this_child_id][1]);
-				close(cc_down[this_child_id-1][0]);
-				close(cc_down[this_child_id-1][1]);
+
+				if(this_child_id+1<P){
+					close(cc_up[this_child_id][0]);			
+					close(cc_down[this_child_id][1]);			
+					// write(cc_up[this_child_id-1][1], u[start_index], 4*N);
+				}	
+
+				// close(cc_up[this_child_id][0]);
+				// close(cc_up[this_child_id][1]);
+				// close(cc_up[this_child_id-1][0]);
+				// close(cc_up[this_child_id-1][1]);
+
+				// close(cc_down[this_child_id][0]);
+				// close(cc_down[this_child_id][1]);
+				// close(cc_down[this_child_id-1][0]);
+				// close(cc_down[this_child_id-1][1]);
 
 				exit(0);
-			}			
+			}
+			// //Sending ghost values to upper and lower process
+			// if(this_child_id-1>=0){
+			// 	write(cc_up[this_child_id-1][1], u[start_index], 4*N);
+			// }
+			// if(this_child_id+1<P){
+			// 	write(cc_down[this_child_id][1], u[end_index], 4*N);	
+			// }
+
+			// // printf("Child Num: %d\n", this_child_id);
+
+			// //Receiving ghost values from upper and lower process
+			// if(this_child_id-1>=0){
+			// 	read(cc_down[this_child_id-1][0], ghost_above, 4*N);
+			// }
+			// if(this_child_id+1<P){
+			// 	read(cc_up[this_child_id][0], ghost_below, 4*N);
+			// }			
+			
 			
 		}
 
 		exit(0);
 	}
 
-finalstep:
-	//Receive from P process
-	for(int i=0;i<P;i++){
-		int start_index = start_indices[i];
-		int end_index = end_indices[i];;
-		// if(i==P-1) {end_index= N-1;}
-		// else {end_index = start_index + ((N-2)/P);}
+// finalstep:
+// 	//Receive from P process
+// 	for(int i=0;i<P;i++){
+// 		int start_index = start_indices[i];
+// 		int end_index = end_indices[i];;
+// 		// if(i==P-1) {end_index= N-1;}
+// 		// else {end_index = start_index + ((N-2)/P);}
 
-		for(int j=start_index; j<=end_index; j++){
-			// int values[N];
-			read(cp_pipe[i][0], u[j], 4*N);
-			// for(int k=0;k<N;k++) u[j][k] = values[k];
-		}
-	}
+// 		for(int j=start_index; j<=end_index; j++){
+// 			// int values[N];
+// 			read(cp_pipe[i][0], u[j], 4*N);
+// 			// for(int k=0;k<N;k++) u[j][k] = values[k];
+// 		}
+// 	}
 
-	for(int i=0;i<N;i++){
-		for(int j=0; j<N;j++){
-			printf("%f ", u[i][j]);
-		}
-		printf("\n");
-	}
+// 	for(int i=0;i<N;i++){
+// 		for(int j=0; j<N;j++){
+// 			printf("%d ", (int)u[i][j]);
+// 		}
+// 		printf("\n");
+// 	}
 
-	for(int i=0;i<P-1;i++){
-		close(pc_pipe[i][1]);
-		close(cp_pipe[i][0]);
-	}
+// 	for(int i=0;i<P-1;i++){
+// 		close(pc_pipe[i][1]);
+// 		close(cp_pipe[i][0]);
+// 	}
 
-    for(int i=0;i<P;i++) wait(NULL);	
-	exit(1);
+//     for(int i=0;i<P;i++) wait(NULL);	
+// 	exit(1);
 
 }
