@@ -180,8 +180,8 @@ UPROGS=\
 	_jacob\
 
 
-fs.img: mkfs README arr $(UPROGS)
-	./mkfs fs.img README jac.inp $(UPROGS)
+fs.img: mkfs README arr assig2a.inp $(UPROGS)
+	./mkfs fs.img README arr assig2a.inp $(UPROGS)
 
 -include *.d
 
