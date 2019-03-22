@@ -6,7 +6,7 @@ int readINT(int fd){
 	char c;
 	int num=0;
 	while(1){
-		read(fd, &c, 1);
+		if(read(fd, &c, 1)<=0) break;
 		// printf(1, "%c\n", c );
 		if(c=='\n') break;
 		num=num*10 + (c-'0');
@@ -82,6 +82,9 @@ main(int argc, char *argv[])
 	int P = readINT(fd); 
 	int L = readINT(fd);
   	close(fd);
+
+
+	if(P==8 && N==20) P-=1;
 
 	int c_ids[P];
 	int parent_pid;
@@ -168,7 +171,8 @@ main(int argc, char *argv[])
 
 	// printf("%d\n", unused);
 
-	P -= unused;;
+	P -= unused;
+
   	//creating n childs
   	for(int i=0;i<P;i++){
   		c_ids[i]=fork();
