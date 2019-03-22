@@ -84,6 +84,7 @@ main(int argc, char *argv[])
   	close(fd);
 
 
+  	//For memory trap
 	if(P==8 && N==20) P-=1;
 
 	int c_ids[P];
